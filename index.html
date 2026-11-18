@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bursdagsbingo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#2f2a8c;
+  --bg-dot:rgba(255,255,255,.07);
+  --card:#ffffff;
+  --text:#1d1b3a;
+  --muted:#5d5a80;
+  --line:#dcd9f0;
+  --dauber:rgba(255,61,127,.82);
+  --dauber-text:#ffffff;
+  --win:#ffcf26;
+  --win-text:#1d1b3a;
+  --button:#1d1b3a;
+  --button-text:#ffffff;
+  --field:#f3f2fb;
+  --error:#c4153f;
+  --on-bg:#ffffff;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#151236; --bg-dot:rgba(255,255,255,.05); --card:#23204a; --text:#f1efff; --muted:#aeaad6;
+    --line:#3a3670; --dauber:rgba(255,77,140,.8); --win:#f2c419; --button:#f1efff; --button-text:#151236;
+    --field:#2e2a5c; --error:#ff7a98; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#151236; --bg-dot:rgba(255,255,255,.05); --card:#23204a; --text:#f1efff; --muted:#aeaad6;
+  --line:#3a3670; --dauber:rgba(255,77,140,.8); --win:#f2c419; --button:#f1efff; --button-text:#151236;
+  --field:#2e2a5c; --error:#ff7a98; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0; min-height:100%;
+  background-color:var(--bg);
+  background-image:radial-gradient(var(--bg-dot) 2px, transparent 2.5px);
+  background-size:22px 22px;
+  color:var(--text);
+  font-family:Rubik, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height:1.4;
+}
+main{max-width:640px; margin:0 auto; padding:0}
+.about{padding:28px 14px 24px}
+.about.below{padding:18px 14px 40px}
+.about.below .rules{margin-top:0}
+h1{
+  font-family:"Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-weight:400; color:var(--on-bg); text-align:center;
+  font-size:clamp(2.6rem, 11vw, 4rem); line-height:1; margin:8px 0 6px;
+  letter-spacing:.01em; text-shadow:0 4px 0 rgba(0,0,0,.25);
+}
+.intro{color:var(--on-bg); opacity:.88; text-align:center; margin:0 auto 20px; max-width:34ch}
+.card{background:var(--card); border-radius:0; padding:10px 8px; display:flex; flex-direction:column; min-height:100vh; min-height:100dvh}
+@media (min-width:700px){.card{border-radius:0 0 22px 22px}}
+.player{display:flex; align-items:center; gap:10px; margin-bottom:10px}
+.player label{font-weight:500; white-space:nowrap}
+input[type=text]{
+  font:inherit; color:var(--text); background:var(--field); border:2px solid transparent;
+  border-radius:12px; padding:10px 12px; width:100%; min-width:0;
+}
+input[type=text]:focus{outline:none; border-color:var(--dauber)}
+.grid{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); grid-template-rows:repeat(4, minmax(0,1fr)); gap:5px; flex:1; min-height:420px}
+.cell{
+  position:relative; min-width:0; min-height:0; border:2px solid var(--line); border-radius:12px;
+  background:var(--card); color:var(--text); font:inherit; cursor:pointer;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  padding:3px 2px; text-align:center;
+  font-size:clamp(.7rem, 3.3vw, .95rem); line-height:1.15; hyphens:auto; overflow-wrap:anywhere;
+}
+.cell:focus-visible{outline:3px solid var(--dauber); outline-offset:2px}
+.cell .stmt{position:relative; z-index:1}
+.cell.filled::before{
+  content:""; position:absolute; inset:2px; border-radius:16px;
+  background:var(--dauber);
+  animation:stamp .28s ease-out;
+}
+.cell.filled{color:var(--dauber-text); border-color:transparent}
+.cell.filled .stmt{font-size:.85em; opacity:.95}
+.cell .who{
+  position:relative; z-index:1; font-weight:700; margin-top:4px; font-size:1.08em;
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.cell.win{background:var(--win); border-color:var(--win)}
+.cell.win, .cell.win.filled{color:var(--win-text)}
+.cell.win.filled::before{background:rgba(255,61,127,.28)}
+@keyframes stamp{from{transform:scale(1.4); opacity:0} to{transform:scale(1); opacity:1}}
+.footer{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap}
+.progress{color:var(--muted); font-size:.95rem}
+button.btn{
+  font:inherit; font-weight:500; border:0; border-radius:999px; padding:10px 18px; cursor:pointer;
+  background:var(--button); color:var(--button-text);
+}
+button.btn.ghost{background:transparent; color:var(--text); box-shadow:inset 0 0 0 2px var(--line)}
+button.btn.pink{background:#ff3d7f; color:#fff}
+button.btn:focus-visible{outline:3px solid var(--dauber); outline-offset:2px}
+.rules{color:var(--on-bg); opacity:.85; font-size:.92rem; margin:22px auto 0; max-width:46ch}
+.rules p{margin:.4em 0}
+dialog{
+  border:0; border-radius:20px; padding:20px; width:min(92vw, 400px);
+  background:var(--card); color:var(--text); box-shadow:0 20px 60px rgba(0,0,0,.4);
+}
+dialog::backdrop{background:rgba(10,8,40,.6)}
+dialog h2{margin:0 0 4px; font-size:1.25rem}
+dialog .hint{color:var(--muted); margin:0 0 14px; font-size:.95rem}
+dialog .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap}
+.error{color:var(--error); font-size:.92rem; margin:8px 0 0; min-height:1.2em}
+.bingo h2{
+  font-family:"Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif; font-weight:400;
+  font-size:3.4rem; color:#ff3d7f; text-align:center; margin:4px 0; line-height:1;
+}
+.bingo p{text-align:center}
+.bingo .actions{justify-content:center}
+.chip{font:inherit; font-weight:500; font-size:.85rem; border:0; border-radius:999px; padding:9px 12px; cursor:pointer; background:var(--field); color:var(--text); white-space:nowrap; box-shadow:inset 0 0 0 2px var(--line)}
+.chip.on{background:#4fd1c5; color:#10322f; box-shadow:none}
+.chip:focus-visible{outline:3px solid var(--dauber); outline-offset:2px}
+.codeInput{text-transform:uppercase; letter-spacing:.3em; font-size:1.4rem; text-align:center}
+#host{padding:22px 18px 40px; color:var(--on-bg); max-width:900px; margin:0 auto}
+#host h1{font-size:clamp(2.2rem,6vw,3.6rem)}
+.hostTop{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:14px; margin:6px 0 22px}
+.hostCode{font-family:"Bagel Fat One","Arial Rounded MT Bold",sans-serif; font-size:clamp(2.4rem,8vw,4.5rem); letter-spacing:.18em; background:var(--win); color:var(--win-text); border-radius:18px; padding:4px 22px 4px 30px; box-shadow:0 6px 0 rgba(0,0,0,.25)}
+.hostHint{text-align:center; opacity:.88; margin:0 0 4px; font-size:clamp(1rem,2.4vw,1.3rem)}
+.hostTools{display:flex; gap:8px; justify-content:center; align-items:center; margin:8px 0 22px; flex-wrap:wrap}
+.hostTools input{width:8ch; text-transform:uppercase; text-align:center; letter-spacing:.2em}
+.row{background:rgba(255,255,255,.1); border-radius:18px; padding:12px 16px; margin:0 0 12px}
+.row.off{opacity:.5}
+.row .top{display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:clamp(1.3rem,3.6vw,2.2rem); font-weight:700}
+.row .top .n{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.row .top .c{font-weight:500; white-space:nowrap; font-size:.8em}
+.bar{height:clamp(16px,3.2vw,26px); border-radius:999px; background:rgba(0,0,0,.28); margin-top:8px; overflow:hidden}
+.bar i{display:block; height:100%; width:0; background:#ff3d7f; border-radius:999px; transition:width .7s ease}
+.row.bingo .bar i{background:var(--win)}
+.tag{background:var(--win); color:var(--win-text); border-radius:999px; padding:0 .6em; margin-left:.5em; font-size:.65em; vertical-align:middle}
+.empty{text-align:center; opacity:.8; padding:30px 0}
+#hostMsg{text-align:center; color:#ffd2e2; min-height:1.3em}
+#confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:50}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<section id="host" hidden>
+  <h1>Bursdagsbingo</h1>
+  <p class="hostHint">Gå til bingolenken og skriv inn rundekoden:</p>
+  <div class="hostTop"><div class="hostCode" id="hostCode">----</div></div>
+  <div class="hostTools"><input type="text" id="hostCodeIn" maxlength="6" aria-label="Ny kode" placeholder="KODE" autocomplete="off"><button class="btn ghost" id="hostCodeBtn" type="button" style="color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)">Bytt kode</button></div>
+  <p id="hostMsg" role="status"></p>
+  <div id="hostList"></div>
+</section>
+<main id="app">
+  <div class="about">
+  <h1>Bursdagsbingo</h1>
+  <p class="intro">Finn noen som passer påstanden, og skriv navnet deres i ruten. Fire på rad vinner!</p>
+  </div>
+  <div class="card">
+    <div class="player">
+      <label for="player">Ditt navn</label>
+      <input type="text" id="player" maxlength="30" placeholder="Skriv navnet ditt" autocomplete="off">
+      <button class="chip" id="roundBtn" type="button">Bli med i runde</button>
+    </div>
+    <div class="grid" id="grid" role="grid" aria-label="Bingobrett"></div>
+    <div class="footer">
+      <span class="progress" id="progress"></span>
+      <button class="btn ghost" id="resetBtn" type="button">Nytt brett</button>
+    </div>
+  </div>
+
+  <div class="about below">
+  <div class="rules">
+    <p>Alle har de samme påstandene, men i ulik rekkefølge. Du får rad vannrett, loddrett eller på skrå.</p>
+    <p>Hver person kan bare stå i én rute på brettet ditt.</p>
+  </div>
+  </div>
+</main>
+
+<dialog id="cellDialog">
+  <h2 id="dlgStatement"></h2>
+  <p class="hint">Hvem passer påstanden?</p>
+  <input type="text" id="dlgName" maxlength="30" placeholder="Navn" autocomplete="off">
+  <p class="error" id="dlgError" role="alert"></p>
+  <div class="actions">
+    <button class="btn ghost" type="button" id="dlgClear">Fjern navn</button>
+    <button class="btn ghost" type="button" id="dlgCancel">Avbryt</button>
+    <button class="btn" type="button" id="dlgSave">Lagre</button>
+  </div>
+</dialog>
+
+<dialog id="joinDialog">
+  <h2>Bli med i runden</h2>
+  <p class="hint">Skriv navnet ditt og koden som vises på storskjermen.</p>
+  <input type="text" id="joinName" maxlength="30" placeholder="Navnet ditt" autocomplete="off" style="margin-bottom:10px">
+  <input type="text" id="joinCode" class="codeInput" maxlength="6" placeholder="KODE" autocomplete="off" autocapitalize="characters">
+  <p class="error" id="joinError" role="alert"></p>
+  <div class="actions">
+    <button class="btn ghost" type="button" id="joinLeave">Spill uten runde</button>
+    <button class="btn" type="button" id="joinGo">Bli med</button>
+  </div>
+</dialog>
+
+<dialog id="resetDialog">
+  <h2>Vil du få et nytt brett?</h2>
+  <p class="hint">Rutene stokkes på nytt, og navnene du har skrevet blir slettet.</p>
+  <div class="actions">
+    <button class="btn ghost" type="button" id="resetCancel">Avbryt</button>
+    <button class="btn" type="button" id="resetConfirm">Lag nytt brett</button>
+  </div>
+</dialog>
+
+<dialog id="bingoDialog" class="bingo">
+  <h2>BINGO!</h2>
+  <p id="bingoText"></p>
+  <p class="hint" style="text-align:center">Rop «BINGO!» og vis skjermen til bursdagsbarna.</p>
+  <div class="actions"><button class="btn pink" type="button" id="bingoClose">Fortsett</button></div>
+</dialog>
+
+<script>
+const STATEMENTS = [
+  "Snakker minst tre språk",
+  "Har bursdag i samme måned som deg",
+  "Spiller et instrument",
+  "Liker ananas på pizza",
+  "Har vært på TV eller i avisa",
+  "Har løpt et halvmaraton",
+  "Kan sjonglere",
+  "Har vært på konsert i år",
+  "Er yngst av søsknene sine",
+  "Har kjent en av bursdagsbarna i lenger enn 10 år",
+  "Drikker ikke kaffe",
+  "Kjenner ikke Caroline",
+  "Kjenner ikke Gustav",
+  "I slekt med en av bursdagsbarna",
+  "Kollega av bursdagsbarna",
+  "Over 32 år"
+];
+const SIZE = 4, N = SIZE * SIZE;
+const KEY = "bursdagsbingo-v3";
+
+const LINES = [];
+for (let r = 0; r < SIZE; r++) LINES.push([...Array(SIZE)].map((_, c) => r * SIZE + c));
+for (let c = 0; c < SIZE; c++) LINES.push([...Array(SIZE)].map((_, r) => r * SIZE + c));
+LINES.push([...Array(SIZE)].map((_, i) => i * SIZE + i));
+LINES.push([...Array(SIZE)].map((_, i) => i * SIZE + (SIZE - 1 - i)));
+
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function freshBoard(){ return { order: shuffle([...Array(N).keys()]), names: Array(N).fill(""), celebrated: false }; }
+function load(){
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && Array.isArray(s.order) && s.order.length === N && Array.isArray(s.names) && s.names.length === N) return s;
+  } catch (e) {}
+  return null;
+}
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+let state = load() || Object.assign(freshBoard(), { player: "" });
+if (typeof state.player !== "string") state.player = "";
+
+const grid = document.getElementById("grid");
+const progress = document.getElementById("progress");
+const playerInput = document.getElementById("player");
+playerInput.value = state.player;
+playerInput.addEventListener("input", () => { state.player = playerInput.value; save(); });
+
+function winningCells(){
+  const set = new Set();
+  let count = 0;
+  for (const line of LINES){
+    if (line.every(i => state.names[i].trim())){ count++; line.forEach(i => set.add(i)); }
+  }
+  return { set, count };
+}
+
+function render(){
+  const { set, count } = winningCells();
+  grid.innerHTML = "";
+  state.order.forEach((sIdx, i) => {
+    const name = state.names[i].trim();
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "cell" + (name ? " filled" : "") + (set.has(i) ? " win" : "");
+    b.setAttribute("aria-label", STATEMENTS[sIdx] + (name ? ": " + name : ": tom"));
+    const st = document.createElement("span"); st.className = "stmt"; st.textContent = STATEMENTS[sIdx];
+    b.appendChild(st);
+    if (name){ const w = document.createElement("span"); w.className = "who"; w.textContent = name; b.appendChild(w); }
+    b.addEventListener("click", () => openCell(i));
+    grid.appendChild(b);
+  });
+  const filled = state.names.filter(n => n.trim()).length;
+  progress.textContent = `${filled} av ${N} ruter fylt`;
+  syncPresence(filled, count);
+
+  if (count > 0 && !state.celebrated){ state.celebrated = true; save(); celebrate(); }
+  if (count === 0 && state.celebrated){ state.celebrated = false; save(); }
+}
+
+// Cell dialog
+const cellDialog = document.getElementById("cellDialog");
+const dlgStatement = document.getElementById("dlgStatement");
+const dlgName = document.getElementById("dlgName");
+const dlgError = document.getElementById("dlgError");
+let current = -1;
+
+function openCell(i){
+  current = i;
+  dlgStatement.textContent = STATEMENTS[state.order[i]];
+  dlgName.value = state.names[i];
+  dlgError.textContent = "";
+  document.getElementById("dlgClear").style.display = state.names[i] ? "" : "none";
+  cellDialog.showModal();
+  setTimeout(() => dlgName.focus(), 30);
+}
+function saveCell(){
+  const name = dlgName.value.trim().replace(/\s+/g, " ");
+  if (!name){ dlgError.textContent = "Skriv et navn, eller trykk Avbryt."; return; }
+  const dup = state.names.findIndex((n, j) => j !== current && n.trim().toLowerCase() === name.toLowerCase());
+  if (dup !== -1){
+    dlgError.textContent = `${name} står allerede i ruten «${STATEMENTS[state.order[dup]]}». Finn noen andre!`;
+    return;
+  }
+  state.names[current] = name; save(); cellDialog.close(); render();
+}
+document.getElementById("dlgSave").addEventListener("click", saveCell);
+dlgName.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); saveCell(); } });
+document.getElementById("dlgCancel").addEventListener("click", () => cellDialog.close());
+document.getElementById("dlgClear").addEventListener("click", () => { state.names[current] = ""; save(); cellDialog.close(); render(); });
+
+// Reset
+const resetDialog = document.getElementById("resetDialog");
+document.getElementById("resetBtn").addEventListener("click", () => resetDialog.showModal());
+document.getElementById("resetCancel").addEventListener("click", () => resetDialog.close());
+document.getElementById("resetConfirm").addEventListener("click", () => {
+  const player = state.player;
+  state = Object.assign(freshBoard(), { player });
+  save(); resetDialog.close(); render();
+});
+
+// Bingo celebration
+const bingoDialog = document.getElementById("bingoDialog");
+document.getElementById("bingoClose").addEventListener("click", () => bingoDialog.close());
+function celebrate(){
+  const who = state.player.trim();
+  document.getElementById("bingoText").textContent = who ? `${who} har fire på rad!` : "Du har fire på rad!";
+  bingoDialog.showModal();
+  confetti();
+}
+
+function confetti(){
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c = document.getElementById("confetti"), ctx = c.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+  const colors = ["#ff3d7f", "#ffcf26", "#4fd1c5", "#7b5cff", "#ffffff"];
+  const parts = [...Array(160)].map(() => ({
+    x: innerWidth / 2, y: innerHeight * .35,
+    vx: (Math.random() - .5) * 14, vy: Math.random() * -14 - 4,
+    r: Math.random() * 6 + 4, rot: Math.random() * 6, vr: (Math.random() - .5) * .3,
+    color: colors[Math.floor(Math.random() * colors.length)]
+  }));
+  const start = performance.now();
+  (function frame(t){
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    parts.forEach(p => {
+      p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color; ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore();
+    });
+    if (t - start < 3500) requestAnimationFrame(frame); else ctx.clearRect(0, 0, innerWidth, innerHeight);
+  })(start);
+}
+
+render();
+
+// ---------- Live runde (egen server) ----------
+const PID = (() => { try { let v = localStorage.getItem("bingo-pid"); if (!v){ v = Math.random().toString(36).slice(2, 10); localStorage.setItem("bingo-pid", v); } return v; } catch (e) { return Math.random().toString(36).slice(2, 10); } })();
+const cleanCode = v => (v || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+var conn = { code: cleanCode(lsGet("bingo-code")), ok: false, last: "" };
+const roundBtn = document.getElementById("roundBtn");
+function updateChip(){
+  if (!conn.code){ roundBtn.textContent = "Bli med i runde"; roundBtn.classList.remove("on"); return; }
+  roundBtn.textContent = conn.ok ? "Runde " + conn.code + " ✓" : "Runde " + conn.code + " …";
+  roundBtn.classList.toggle("on", conn.ok);
+}
+function currentCounts(){ const { count } = winningCells(); return { filled: state.names.filter(n => n.trim()).length, lines: count }; }
+async function syncPresence(filled, lines, force){
+  if (!conn || !conn.code) return;
+  const payload = { pid: PID, name: (state.player || "").trim().slice(0, 30) || "Gjest", filled, lines: lines > 0 ? lines : 0, size: N };
+  const key = conn.code + JSON.stringify(payload);
+  if (!force && key === conn.last) return;
+  const code = conn.code;
+  try {
+    const r = await fetch("/api/p/" + code, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    if (!r.ok) throw new Error("http " + r.status);
+    if (code !== conn.code) return;
+    conn.last = key;
+    if (!conn.ok){ conn.ok = true; updateChip(); }
+  } catch (e) {
+    conn.last = "";
+    if (conn.ok){ conn.ok = false; updateChip(); }
+  }
+}
+function connect(){
+  conn.ok = false; conn.last = ""; updateChip();
+  if (!conn.code) return;
+  const c = currentCounts(); syncPresence(c.filled, c.lines, true);
+}
+setInterval(() => { if (conn && conn.code){ const c = currentCounts(); syncPresence(c.filled, c.lines, true); } }, 10000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && conn && conn.code){ const c = currentCounts(); syncPresence(c.filled, c.lines, true); } });
+playerInput.addEventListener("input", () => { const c = currentCounts(); syncPresence(c.filled, c.lines); });
+
+const joinDialog = document.getElementById("joinDialog");
+const joinName = document.getElementById("joinName");
+const joinCode = document.getElementById("joinCode");
+const joinError = document.getElementById("joinError");
+function openJoin(){
+  joinName.value = state.player || ""; joinCode.value = conn.code; joinError.textContent = "";
+  document.getElementById("joinLeave").textContent = conn.code ? "Forlat runde" : "Spill uten runde";
+  joinDialog.showModal();
+  setTimeout(() => (joinName.value ? joinCode : joinName).focus(), 30);
+}
+roundBtn.addEventListener("click", openJoin);
+joinCode.addEventListener("input", () => { joinCode.value = cleanCode(joinCode.value); });
+function doJoin(){
+  const code = cleanCode(joinCode.value);
+  const name = joinName.value.trim().replace(/\s+/g, " ");
+  if (!name){ joinError.textContent = "Skriv navnet ditt."; joinName.focus(); return; }
+  if (code.length < 3){ joinError.textContent = "Skriv inn koden fra storskjermen."; joinCode.focus(); return; }
+  state.player = name; playerInput.value = name; save();
+  conn.code = code; lsSet("bingo-code", code); lsSet("bingo-dismissed", "1");
+  joinDialog.close(); connect();
+}
+document.getElementById("joinGo").addEventListener("click", doJoin);
+[joinName, joinCode].forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); doJoin(); } }));
+document.getElementById("joinLeave").addEventListener("click", () => {
+  conn.code = ""; lsSet("bingo-code", ""); lsSet("bingo-dismissed", "1");
+  joinDialog.close(); connect();
+});
+
+// Storskjerm
+const hostEl = document.getElementById("host");
+const hostList = document.getElementById("hostList");
+const hostMsg = document.getElementById("hostMsg");
+const hostState = { code: "", es: null, seen: new Map() };
+function newCode(){ const a = "ABCDEFGHJKLMNPRSTUVXYZ"; let c = ""; for (let i = 0; i < 4; i++) c += a[Math.floor(Math.random() * a.length)]; return c; }
+function renderHost(){
+  const rows = Array.from(hostState.seen.values()).sort((a, b) => b.filled - a.filled || a.name.localeCompare(b.name, "no"));
+  hostList.innerHTML = "";
+  if (!rows.length){
+    const p = document.createElement("p"); p.className = "empty"; p.textContent = "Venter på spillere … be gjestene skrive inn koden.";
+    hostList.appendChild(p); return;
+  }
+  for (const r of rows){
+    const row = document.createElement("div");
+    row.className = "row" + (r.live ? "" : " off") + (r.lines > 0 ? " bingo" : "");
+    const top = document.createElement("div"); top.className = "top";
+    const n = document.createElement("span"); n.className = "n"; n.textContent = r.name;
+    if (r.lines > 0){ const t = document.createElement("span"); t.className = "tag"; t.textContent = "BINGO!"; n.appendChild(t); }
+    const c = document.createElement("span"); c.className = "c"; c.textContent = `${r.filled} av ${r.size} ruter`;
+    top.append(n, c);
+    const bar = document.createElement("div"); bar.className = "bar";
+    bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", String(r.size)); bar.setAttribute("aria-valuenow", String(r.filled)); bar.setAttribute("aria-label", r.name);
+    const i = document.createElement("i"); bar.appendChild(i);
+    row.append(top, bar); hostList.appendChild(row);
+    requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = (r.filled / r.size * 100) + "%"; }));
+  }
+}
+function hostConnect(){
+  if (hostState.es) hostState.es.close();
+  hostState.seen = new Map();
+  document.getElementById("hostCode").textContent = hostState.code;
+  hostMsg.textContent = "Kobler til …"; renderHost();
+  const es = new EventSource("/api/s/" + hostState.code);
+  hostState.es = es;
+  es.onopen = () => { hostMsg.textContent = ""; };
+  es.onerror = () => { hostMsg.textContent = "Mistet kontakten med serveren – prøver igjen …"; };
+  es.onmessage = ev => {
+    let list = []; try { list = JSON.parse(ev.data); } catch (e) { return; }
+    hostState.seen = new Map();
+    for (const p of list){
+      const size = Math.max(1, Math.min(100, Number(p.size) || 16));
+      hostState.seen.set(p.pid, {
+        name: String(p.name || "Gjest").slice(0, 30),
+        filled: Math.max(0, Math.min(size, Number(p.filled) || 0)),
+        lines: Number(p.lines) > 0 ? Number(p.lines) : 0, size, live: Number(p.age) < 25000
+      });
+    }
+    hostMsg.textContent = ""; renderHost();
+  };
+}
+function startHost(){
+  document.getElementById("app").hidden = true;
+  document.getElementById("confetti").hidden = true;
+  hostEl.hidden = false;
+  hostState.code = cleanCode(lsGet("bingo-host-code")) || newCode();
+  lsSet("bingo-host-code", hostState.code);
+  hostConnect();
+}
+document.getElementById("hostCodeBtn").addEventListener("click", () => {
+  const inp = document.getElementById("hostCodeIn");
+  const c = cleanCode(inp.value) || newCode();
+  hostState.code = c; lsSet("bingo-host-code", c); inp.value = ""; hostConnect();
+});
+
+if (location.hash === "#storskjerm") startHost();
+else {
+  updateChip();
+  connect();
+  if (!conn.code && !lsGet("bingo-dismissed")) setTimeout(openJoin, 600);
+}
+
+// Åpne på selve brettet; overskriften ligger over og vises ved å scrolle opp
+(function(){
+  try { history.scrollRestoration = "manual"; } catch (e) {}
+  let touched = false;
+  ["wheel","touchstart","keydown"].forEach(ev => addEventListener(ev, () => { touched = true; }, { passive:true, once:true }));
+  const toBoard = () => { if (!touched && location.hash !== "#storskjerm") document.querySelector(".card").scrollIntoView(); };
+  toBoard();
+  addEventListener("load", toBoard);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(toBoard);
+})();
+</script>
+</body>
+</html>
