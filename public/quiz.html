@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#2f2a8c; --bg-dot:rgba(255,255,255,.07); --card:#fff; --text:#1d1b3a; --muted:#5d5a80; --line:#dcd9f0;
+  --pink:#ff3d7f; --gold:#ffcf26; --green:#1f9d55; --red:#c4153f; --field:#f3f2fb; --on-bg:#fff;
+  --o0:#e21b3c; --o1:#1368ce; --o2:#d89e00; --o3:#26890c;
+  color-scheme:light;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0; min-height:100vh; background-color:var(--bg); background-image:radial-gradient(var(--bg-dot) 2px, transparent 2.5px); background-size:22px 22px; color:var(--text); font-family:Rubik,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.4}
+h1,h2{font-family:"Bagel Fat One","Arial Rounded MT Bold","Trebuchet MS",sans-serif; font-weight:400; margin:0}
+[hidden]{display:none!important}
+button{font:inherit; cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--pink); outline-offset:2px}
+input[type=text]{font:inherit; color:var(--text); background:var(--field); border:2px solid transparent; border-radius:12px; padding:12px 14px; width:100%}
+input[type=text]:focus{outline:none; border-color:var(--pink)}
+.btn{font-weight:700; border:0; border-radius:999px; padding:12px 22px; background:#1d1b3a; color:#fff}
+.btn.pink{background:var(--pink)} .btn.ghost{background:transparent; color:inherit; box-shadow:inset 0 0 0 2px currentColor; opacity:.85}
+.btn:disabled{opacity:.45; cursor:default}
+
+/* ---------- Lagvisning ---------- */
+#team{max-width:560px; margin:0 auto; padding:18px 14px 40px}
+#team h1{color:var(--on-bg); text-align:center; font-size:clamp(2.2rem,10vw,3.4rem); text-shadow:0 4px 0 rgba(0,0,0,.25); margin:6px 0 14px}
+.card{background:var(--card); border-radius:22px; padding:16px; box-shadow:0 10px 0 rgba(0,0,0,.18); margin-bottom:14px}
+.top{display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--on-bg); margin:0 4px 10px; font-size:.95rem}
+.chip{background:rgba(255,255,255,.18); border-radius:999px; padding:4px 12px; font-weight:500; white-space:nowrap}
+.cat{display:inline-block; background:var(--gold); color:#1d1b3a; font-weight:700; border-radius:999px; padding:2px 12px; font-size:.8rem; margin-bottom:8px}
+.qtext{font-size:clamp(1.15rem,4.8vw,1.5rem); font-weight:700; margin:0 0 14px; overflow-wrap:anywhere}
+.opts{display:grid; gap:10px}
+.opt{border:0; border-radius:16px; padding:16px; color:#fff; font-weight:700; font-size:1.05rem; text-align:left; box-shadow:0 5px 0 rgba(0,0,0,.2); border:4px solid transparent}
+.opt:nth-child(1){background:var(--o0)} .opt:nth-child(2){background:var(--o1)} .opt:nth-child(3){background:var(--o2)} .opt:nth-child(4){background:var(--o3)}
+.opt.sel{border-color:#fff; outline:4px solid #1d1b3a}
+.opt.dim{opacity:.35}
+.status{margin-top:12px; font-weight:500; color:var(--muted)}
+.result{border-radius:16px; padding:14px; font-weight:700; font-size:1.3rem; text-align:center; margin-bottom:12px}
+.result.ok{background:#d9f5e3; color:#0d5a2d} .result.no{background:#ffe3ea; color:#7a1230}
+.fact{margin:8px 0; color:var(--muted)} .fact b{color:var(--text)}
+.lb{list-style:none; margin:10px 0 0; padding:0}
+.lb li{display:grid; grid-template-columns:2.2em 1fr auto; gap:8px; align-items:center; padding:7px 10px; border-radius:12px; margin:4px 0; background:var(--field); position:relative; overflow:hidden}
+.lb li .bar{position:absolute; inset:0 auto 0 0; background:rgba(255,61,127,.18); width:0; transition:width .7s ease}
+.lb li>*{position:relative}
+.lb li.me{box-shadow:inset 0 0 0 2px var(--pink)}
+.lb .pos{font-weight:700; color:var(--muted)} .lb .nm{font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap} .lb .sc{font-weight:700}
+.big{font-family:"Bagel Fat One",sans-serif; font-size:2.2rem; text-align:center; margin:4px 0}
+.small{color:var(--muted); font-size:.9rem}
+.err{color:var(--red); min-height:1.3em; margin:8px 0 0}
+label{font-weight:500; display:block; margin:10px 0 4px}
+.codeInput{text-transform:uppercase; letter-spacing:.3em; text-align:center; font-size:1.4rem}
+
+/* ---------- Storskjerm ---------- */
+#host{color:var(--on-bg); padding:18px 24px 40px; max-width:1500px; margin:0 auto}
+#host h1{text-align:center; font-size:clamp(2rem,5vw,3.4rem); text-shadow:0 4px 0 rgba(0,0,0,.25)}
+.hbar{display:flex; flex-wrap:wrap; gap:14px; justify-content:center; align-items:center; margin:8px 0 18px}
+.hcode{font-family:"Bagel Fat One",sans-serif; font-size:clamp(2rem,6vw,3.6rem); letter-spacing:.16em; background:var(--gold); color:#1d1b3a; border-radius:16px; padding:2px 22px 2px 30px; box-shadow:0 6px 0 rgba(0,0,0,.25)}
+.hurl{font-size:clamp(1rem,2.3vw,1.4rem); opacity:.9}
+.hgrid{display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:24px; align-items:start}
+@media (max-width:1000px){.hgrid{grid-template-columns:1fr}}
+.panel{background:rgba(255,255,255,.1); border-radius:22px; padding:18px 22px}
+.panel h2{font-size:1.5rem; margin-bottom:6px}
+.hq{font-size:clamp(1.6rem,3.6vw,2.8rem); font-weight:700; margin:6px 0 18px; overflow-wrap:anywhere; line-height:1.2}
+.hq.long{font-size:clamp(1.2rem,2.3vw,1.9rem)}
+.hopts{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px}
+.hopt{border-radius:16px; padding:18px 20px; font-weight:700; font-size:clamp(1.1rem,2.4vw,1.8rem); color:#fff; border:4px solid transparent; position:relative}
+.hopt:nth-child(1){background:var(--o0)} .hopt:nth-child(2){background:var(--o1)} .hopt:nth-child(3){background:var(--o2)} .hopt:nth-child(4){background:var(--o3)}
+.hopt.dim{opacity:.3} .hopt.right{border-color:#fff; box-shadow:0 0 0 6px var(--gold)}
+.hopt.right::after{content:"✓"; position:absolute; right:14px; top:8px}
+.answerBox{background:var(--gold); color:#1d1b3a; border-radius:18px; padding:14px 22px; font-size:clamp(1.3rem,3vw,2.2rem); font-weight:700; margin:0 0 6px}
+.answerBox small{display:block; font-weight:500; font-size:.55em; opacity:.75}
+.expl{margin:8px 0 14px; opacity:.9; font-size:1.1rem}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0}
+.tchip{background:rgba(255,255,255,.14); border-radius:999px; padding:6px 14px; font-weight:500; font-size:1.05rem}
+.tchip.done{background:#1f9d55}
+.count{font-size:1.3rem; font-weight:700}
+.res{display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:center; padding:8px 12px; border-radius:12px; background:rgba(255,255,255,.1); margin:6px 0; font-size:clamp(1rem,1.9vw,1.4rem)}
+.res .rn{font-weight:700} .res .ra{opacity:.9; overflow-wrap:anywhere}
+.tog{border:0; border-radius:999px; font-weight:700; padding:6px 16px; font-size:1.1rem; min-width:7.5ch}
+.tog.ok{background:var(--green); color:#fff} .tog.no{background:var(--red); color:#fff}
+.hactions{display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; align-items:center}
+.hactions .btn{font-size:1.25rem; padding:14px 30px}
+.hactions .btn.go{background:var(--gold); color:#1d1b3a}
+.hint{opacity:.7; font-size:.95rem}
+#host .lb li{background:rgba(255,255,255,.12); color:#fff; font-size:1.15rem}
+#host .lb .pos,#host .lb .sc{color:#fff}
+#host .lb li .bar{background:rgba(255,61,127,.55)}
+.podium{display:flex; gap:14px; justify-content:center; align-items:flex-end; margin:20px 0}
+.pod{background:rgba(255,255,255,.14); border-radius:18px 18px 0 0; padding:14px 18px; text-align:center; min-width:150px; font-size:clamp(1.1rem,2.5vw,1.8rem); font-weight:700}
+.pod.p1{background:var(--gold); color:#1d1b3a; padding-top:34px; padding-bottom:30px} .pod.p2{padding-top:22px;padding-bottom:16px} .pod.p3{padding-top:12px}
+.pod small{display:block; font-weight:500; opacity:.8; font-size:.65em}
+.msg{text-align:center; min-height:1.3em; color:#ffd2e2}
+</style>
+</head>
+<body>
+
+<!-- ============ Lagvisning ============ -->
+<main id="team" hidden>
+  <h1>Quiz</h1>
+  <div id="tJoin" class="card" hidden>
+    <label for="tName">Lagnavn</label>
+    <input type="text" id="tName" maxlength="24" placeholder="F.eks. Team Ananas" autocomplete="off">
+    <label for="tCode">Kode fra storskjermen</label>
+    <input type="text" id="tCode" class="codeInput" maxlength="6" placeholder="KODE" autocomplete="off" autocapitalize="characters">
+    <p class="err" id="tErr" role="alert"></p>
+    <button class="btn pink" id="tGo" type="button" style="width:100%">Bli med</button>
+    <p class="small" style="margin-bottom:0">Dere er et lag på 3–4 personer som deler én telefon.</p>
+  </div>
+  <div id="tGame" hidden>
+    <div class="top"><span class="chip" id="tTeamChip"></span><button class="btn ghost" id="tLeave" type="button" style="padding:4px 12px;color:#fff;font-size:.85rem">Bytt lag</button></div>
+    <div id="tBody"></div>
+  </div>
+</main>
+
+<!-- ============ Storskjerm ============ -->
+<section id="host" hidden>
+  <h1>Quiz</h1>
+  <div class="hbar">
+    <span class="hurl" id="hUrl"></span>
+    <span class="hcode" id="hCode">----</span>
+    <span class="hint" id="hMsg"></span>
+  </div>
+  <div class="hgrid">
+    <div id="hMain"></div>
+    <aside class="panel"><h2 id="hBoardTitle">Lag</h2><ol class="lb" id="hBoard"></ol></aside>
+  </div>
+  <div class="hactions" style="justify-content:center;margin-top:26px">
+    <input type="text" id="hCodeIn" maxlength="6" placeholder="KODE" aria-label="Ny kode" style="width:9ch;text-transform:uppercase;text-align:center;letter-spacing:.2em">
+    <button class="btn ghost" id="hCodeBtn" type="button" style="color:#fff;font-size:1rem;padding:8px 18px">Bytt kode</button>
+    <button class="btn ghost" id="hResetBtn" type="button" style="color:#fff;font-size:1rem;padding:8px 18px">Start på nytt</button>
+  </div>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const cleanCode = v => (v || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+const post = (url, body) => fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const rnd = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, b => b.toString(36).padStart(2, "0")).join(""); };
+function el(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function renderBoard(ol, board, opts){
+  opts = opts || {};
+  ol.innerHTML = "";
+  const max = Math.max(1, ...board.map(b => b.score));
+  const list = opts.limit ? board.slice(0, opts.limit) : board;
+  for (const b of list){
+    const li = el("li", b.tid === opts.me ? "me" : "");
+    const bar = el("span", "bar"); li.appendChild(bar);
+    li.append(el("span", "pos", b.rank + "."), el("span", "nm", b.name), el("span", "sc", b.score + " p"));
+    ol.appendChild(li);
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = (b.score / max * 100) + "%"; }));
+  }
+}
+
+/* =================== LAG =================== */
+const T = { code: cleanCode(lsGet("quiz-code")), name: lsGet("quiz-name") || "", tid: lsGet("quiz-tid") || "", es: null, sig: "", view: null, typed: "" };
+if (!T.tid){ T.tid = rnd(6).slice(0, 12); lsSet("quiz-tid", T.tid); }
+
+async function teamJoin(code, name){
+  const r = await post("/api/quiz/" + code + "/join", { tid: T.tid, name });
+  return r.status;
+}
+function teamStream(){
+  if (T.es){ T.es.close(); T.es = null; }
+  const code = T.code;
+  const es = new EventSource("/api/quiz/" + code + "/stream?tid=" + T.tid);
+  T.es = es;
+  es.onmessage = ev => { try { teamRender(JSON.parse(ev.data)); } catch (e) {} };
+  es.onerror = async () => {
+    if (es.readyState === 2){            // serveren husker oss ikke (restart) – meld på igjen
+      setTimeout(async () => { if (T.es !== es) return; try { await teamJoin(code, T.name); teamStream(); } catch (e) { es.onerror(); } }, 2000);
+    }
+  };
+}
+async function teamStart(){
+  $("tJoin").hidden = true; $("tGame").hidden = false;
+  $("tTeamChip").textContent = T.name + " · " + T.code;
+  T.sig = ""; $("tBody").innerHTML = "";
+  const st = await teamJoin(T.code, T.name).catch(() => 0);
+  if (st === 409){ teamLeave("Lagnavnet er tatt. Velg et annet."); return; }
+  if (st !== 204){ teamLeave("Fikk ikke kontakt med quizen. Sjekk koden."); return; }
+  teamStream();
+}
+function teamLeave(msg){
+  if (T.es){ T.es.close(); T.es = null; }
+  T.code = ""; lsSet("quiz-code", "");
+  $("tGame").hidden = true; $("tJoin").hidden = false;
+  $("tName").value = T.name; $("tCode").value = ""; $("tErr").textContent = msg || "";
+}
+$("tCode").addEventListener("input", () => { $("tCode").value = cleanCode($("tCode").value); });
+async function doJoin(){
+  const name = $("tName").value.trim().replace(/\s+/g, " "), code = cleanCode($("tCode").value);
+  if (!name){ $("tErr").textContent = "Skriv et lagnavn."; return; }
+  if (code.length < 3){ $("tErr").textContent = "Skriv inn koden fra storskjermen."; return; }
+  T.name = name; T.code = code; lsSet("quiz-name", name); lsSet("quiz-code", code);
+  teamStart();
+}
+$("tGo").addEventListener("click", doJoin);
+[$("tName"), $("tCode")].forEach(e => e.addEventListener("keydown", ev => { if (ev.key === "Enter"){ ev.preventDefault(); doJoin(); } }));
+$("tLeave").addEventListener("click", () => teamLeave(""));
+
+async function sendAnswer(body){
+  try { await post("/api/quiz/" + T.code + "/answer", Object.assign({ tid: T.tid }, body)); } catch (e) {}
+}
+function teamRender(v){
+  T.view = v;
+  const sig = JSON.stringify([v.state, v.q && v.q.i, v.answered, v.myAnswer, v.myIdx, v.reveal, v.board, v.you, v.teams]);
+  if (sig === T.sig) return;
+  T.sig = sig;
+  const body = $("tBody");
+  const keepTyped = document.activeElement && document.activeElement.id === "ansInput" ? document.activeElement.value : null;
+  body.innerHTML = "";
+  const youLine = () => { const p = el("p", "small", "Dere ligger på plass " + v.you.rank + " av " + v.teams + " · " + v.you.score + " poeng"); p.style.color = "#fff"; p.style.textAlign = "center"; return p; };
+
+  if (v.state === "lobby"){
+    const c = el("div", "card");
+    c.append(el("div", "big", "Dere er med! 🎉"), el("p", "", "Venter på at quizen starter …"));
+    const ol = el("ol", "lb"); c.appendChild(ol); body.appendChild(c);
+    renderBoard(ol, v.board.map(b => Object.assign({}, b, { rank: "•" })), { me: v.you.tid });
+  }
+  else if (v.state === "question"){
+    const q = v.q, c = el("div", "card");
+    c.append(el("span", "cat", q.cat + " · " + (q.i + 1) + " av " + q.n), el("p", "qtext", q.q));
+    if (q.type === "choice"){
+      const g = el("div", "opts");
+      q.options.forEach((o, i) => {
+        const b = el("button", "opt" + (v.myIdx === i ? " sel" : ""), o); b.type = "button";
+        b.addEventListener("click", () => sendAnswer({ idx: i }));
+        g.appendChild(b);
+      });
+      c.appendChild(g);
+    } else {
+      const inp = el("input"); inp.type = "text"; inp.id = "ansInput"; inp.maxLength = 200; inp.placeholder = "Skriv svaret deres"; inp.autocomplete = "off";
+      inp.value = keepTyped != null ? keepTyped : (v.myAnswer || "");
+      const b = el("button", "btn pink", v.answered ? "Endre svar" : "Send svar"); b.type = "button"; b.style.cssText = "width:100%;margin-top:10px";
+      const go = () => { const t = inp.value.trim(); if (t) sendAnswer({ text: t }); };
+      b.addEventListener("click", go); inp.addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); go(); } });
+      c.append(inp, b);
+    }
+    c.appendChild(el("p", "status", v.answered ? "✓ Svar sendt: «" + v.myAnswer + "». Dere kan endre det til fasiten vises." : "Diskuter i laget, og send svaret."));
+    body.append(c, youLine());
+  }
+  else if (v.state === "reveal"){
+    const q = v.q, rv = v.reveal, c = el("div", "card");
+    c.append(el("span", "cat", q.cat + " · " + (q.i + 1) + " av " + q.n), el("p", "qtext", q.q));
+    c.appendChild(el("div", "result " + (rv.ok ? "ok" : "no"), rv.ok ? "Riktig! +" + rv.gained + " poeng 🎉" : (v.answered ? "Ikke denne gangen" : "Ingen svar")));
+    const f1 = el("p", "fact"); f1.append("Riktig svar: ", Object.assign(el("b"), { textContent: rv.answer })); c.appendChild(f1);
+    if (v.myAnswer) { const f2 = el("p", "fact"); f2.append("Deres svar: ", Object.assign(el("b"), { textContent: v.myAnswer })); c.appendChild(f2); }
+    if (rv.explain) c.appendChild(el("p", "fact", rv.explain));
+    c.appendChild(el("p", "small", "Venter på neste spørsmål …"));
+    const lc = el("div", "card"); lc.appendChild(el("h2", "", "Poengtavle")); const ol = el("ol", "lb"); lc.appendChild(ol);
+    body.append(c, lc); renderBoard(ol, v.board, { me: v.you.tid });
+  }
+  else if (v.state === "done"){
+    const c = el("div", "card");
+    c.append(el("div", "big", v.you.rank === 1 ? "🏆 Dere vant!" : "Quizen er ferdig!"), el("p", "", "Dere ble nummer " + v.you.rank + " med " + v.you.score + " poeng."));
+    const ol = el("ol", "lb"); c.appendChild(ol); body.appendChild(c);
+    renderBoard(ol, v.board, { me: v.you.tid });
+  }
+  if (keepTyped != null){ const i = $("ansInput"); if (i){ i.focus(); } }
+}
+
+/* =================== STORSKJERM =================== */
+const H = { code: "", key: "", es: null, v: null, sig: "" };
+function newCode(){ const a = "ABCDEFGHJKLMNPRSTUVXYZ"; let c = ""; for (let i = 0; i < 4; i++) c += a[Math.floor(Math.random() * a.length)]; return c; }
+async function hostAct(action, extra){
+  try { const r = await post("/api/quiz/" + H.code + "/host/act", Object.assign({ key: H.key, action }, extra || {})); if (r.status === 403) $("hMsg").textContent = "Ikke tilgang (annen storskjerm?)"; } catch (e) { $("hMsg").textContent = "Fikk ikke sendt – prøv igjen."; }
+}
+function primaryAction(){
+  const v = H.v; if (!v) return;
+  if (v.state === "lobby" && v.teams) hostAct("start");
+  else if (v.state === "question") hostAct("reveal");
+  else if (v.state === "reveal") hostAct("next");
+}
+function hostRender(v){
+  H.v = v;
+  const main = $("hMain"); main.innerHTML = "";
+  $("hBoardTitle").textContent = v.state === "lobby" ? "Lag (" + v.teams + ")" : "Poengtavle";
+  renderBoard($("hBoard"), v.board.map(b => v.state === "lobby" ? Object.assign({}, b, { rank: "•" }) : b), {});
+  const p = el("div", "panel");
+  const primary = (label, cls) => { const b = el("button", "btn " + (cls || "go"), label); b.type = "button"; b.addEventListener("click", primaryAction); return b; };
+
+  if (v.state === "lobby"){
+    p.appendChild(el("h2", "", "Velkommen!"));
+    p.appendChild(el("p", "expl", "Gå til adressen over, skriv inn koden og velg et lagnavn. Dere er 3–4 på hvert lag og deler én telefon."));
+    const ch = el("div", "chips"); v.board.forEach(b => ch.appendChild(el("span", "tchip", b.name))); p.appendChild(ch);
+    const a = el("div", "hactions");
+    const b = primary("Start quiz (" + v.n + " spørsmål)"); b.disabled = !v.teams; a.appendChild(b);
+    a.appendChild(el("span", "hint", v.teams ? "Mellomrom starter" : "Venter på første lag …")); p.appendChild(a);
+  }
+  else if (v.state === "question" || v.state === "reveal"){
+    const q = v.q;
+    p.appendChild(el("span", "chip", q.cat + " · Spørsmål " + (q.i + 1) + " av " + q.n + (q.points > 1 ? " · " + q.points + " poeng" : "")));
+    p.appendChild(el("div", "hq" + (q.q.length > 120 ? " long" : ""), q.q));
+    if (q.type === "choice"){
+      const g = el("div", "hopts");
+      q.options.forEach((o, i) => {
+        const right = v.state === "reveal" && v.reveal.correct.includes(i);
+        g.appendChild(el("div", "hopt" + (v.state === "reveal" ? (right ? " right" : " dim") : ""), o));
+      });
+      p.appendChild(g);
+    }
+    if (v.state === "question"){
+      p.appendChild(el("p", "count", v.answeredCount + " av " + v.teams + " lag har svart"));
+      const ch = el("div", "chips"); v.board.slice().sort((a, b) => a.name.localeCompare(b.name, "no")).forEach(b => ch.appendChild(el("span", "tchip" + (b.answered ? " done" : ""), (b.answered ? "✓ " : "") + b.name))); p.appendChild(ch);
+      const a = el("div", "hactions"); a.appendChild(primary("Vis svar")); a.appendChild(el("span", "hint", v.answeredCount === v.teams && v.teams ? "Alle har svart – trykk mellomrom" : "Mellomrom viser svaret")); p.appendChild(a);
+    } else {
+      const ab = el("div", "answerBox"); ab.append(el("small", "", "Riktig svar"), document.createTextNode(v.reveal.answer)); p.appendChild(ab);
+      if (v.reveal.explain) p.appendChild(el("p", "expl", v.reveal.explain));
+      p.appendChild(el("p", "hint", "Trykk på ✓/✗ for å overstyre et lag hvis maskinen vurderte feil."));
+      v.results.forEach(r => {
+        const row = el("div", "res");
+        row.append(el("span", "rn", r.name), el("span", "ra", r.text == null ? "(ikke svart)" : r.text));
+        const t = el("button", "tog " + (r.ok ? "ok" : "no"), r.ok ? "✓ +" + q.points : "✗ 0"); t.type = "button";
+        t.addEventListener("click", () => hostAct("toggle", { tid: r.tid })); row.appendChild(t); p.appendChild(row);
+      });
+      const a = el("div", "hactions"); a.appendChild(primary(q.i + 1 >= q.n ? "Se sluttresultat" : "Neste spørsmål")); a.appendChild(el("span", "hint", "Mellomrom går videre")); p.appendChild(a);
+    }
+  }
+  else if (v.state === "done"){
+    p.appendChild(el("h2", "", "🏆 Sluttresultat"));
+    const top = v.board.filter(b => b.rank <= 3);
+    const pod = el("div", "podium");
+    [2, 1, 3].forEach(rank => {
+      const teams = top.filter(b => b.rank === rank); if (!teams.length) return;
+      const d = el("div", "pod p" + rank);
+      d.append(rank === 1 ? "👑 " : (rank + ". "), teams.map(t => t.name).join(" & "), Object.assign(el("small"), { textContent: teams[0].score + " poeng" }));
+      pod.appendChild(d);
+    });
+    p.appendChild(pod);
+    p.appendChild(el("p", "hint", "Takk for at dere var med! «Start på nytt» lar lagene spille en ny runde."));
+  }
+  main.appendChild(p);
+}
+async function hostConnect(){
+  if (H.es){ H.es.close(); H.es = null; }
+  $("hCode").textContent = H.code; $("hMsg").textContent = "Kobler til …"; $("hMain").innerHTML = ""; $("hBoard").innerHTML = "";
+  const code = H.code;
+  H.key = lsGet("quiz-host-key:" + code) || rnd(12);
+  lsSet("quiz-host-key:" + code, H.key);
+  try {
+    const r = await post("/api/quiz/" + code + "/host/auth", { key: H.key });
+    if (code !== H.code) return;
+    if (r.status === 403){ $("hMsg").textContent = "Koden brukes av en annen storskjerm. Trykk «Bytt kode»."; return; }
+    if (!r.ok) throw new Error();
+  } catch (e) { $("hMsg").textContent = "Fikk ikke kontakt med serveren – last siden på nytt."; return; }
+  const es = new EventSource("/api/quiz/" + code + "/host/stream?key=" + encodeURIComponent(H.key));
+  H.es = es;
+  es.onopen = () => { $("hMsg").textContent = ""; };
+  es.onerror = () => { $("hMsg").textContent = "Mistet kontakten – prøver igjen …"; };
+  es.onmessage = ev => { try { hostRender(JSON.parse(ev.data)); $("hMsg").textContent = ""; } catch (e) {} };
+}
+function startHost(){
+  $("host").hidden = false;
+  H.code = cleanCode(lsGet("quiz-host-code")) || newCode(); lsSet("quiz-host-code", H.code);
+  $("hUrl").textContent = location.host + "/quiz";
+  hostConnect();
+}
+$("hCodeBtn").addEventListener("click", () => { const c = cleanCode($("hCodeIn").value) || newCode(); H.code = c; lsSet("quiz-host-code", c); $("hCodeIn").value = ""; hostConnect(); });
+let armed = 0;
+$("hResetBtn").addEventListener("click", e => {
+  const b = e.currentTarget;
+  if (!armed){ armed = setTimeout(() => { armed = 0; b.textContent = "Start på nytt"; }, 4000); b.textContent = "Sikker? Trykk igjen"; return; }
+  clearTimeout(armed); armed = 0; b.textContent = "Start på nytt"; hostAct("reset");
+});
+document.addEventListener("keydown", e => {
+  if ($("host").hidden || e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+  if (e.key === " " || e.key === "Enter"){ e.preventDefault(); primaryAction(); }
+});
+
+/* =================== Start =================== */
+if (location.hash === "#storskjerm") startHost();
+else {
+  $("team").hidden = false;
+  if (T.code && T.name) teamStart();
+  else { $("tJoin").hidden = false; $("tName").value = T.name; }
+}
+</script>
+</body>
+</html>

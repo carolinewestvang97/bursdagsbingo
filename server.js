@@ -4,9 +4,11 @@
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
+const quiz = require("./quiz");
 
 const PORT = process.env.PORT || 3000;
 const INDEX = path.join(__dirname, "public", "index.html");
+const QUIZ_PAGE = path.join(__dirname, "public", "quiz.html");
 const MAX_ROOMS = 300, MAX_PLAYERS = 300, MAX_QUEUE = 30, ROOM_TTL = 12 * 3600 * 1000;
 const CELLS = 16;
 
@@ -102,6 +104,15 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
+  if (req.method === "GET" && (url.pathname === "/quiz" || url.pathname === "/quiz/")) {
+    fs.readFile(QUIZ_PAGE, (err, buf) => {
+      if (err) { res.writeHead(500); return res.end("Mangler public/quiz.html"); }
+      res.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
+      res.end(buf);
+    });
+    return;
+  }
+  if (quiz.handle(req, res, url, parts)) return;
   if (url.pathname === "/healthz") { res.writeHead(200); return res.end("ok"); }
   if (parts[0] !== "api" || !validCode(code)) { res.writeHead(404); return res.end("Fant ikke siden"); }
 
@@ -231,4 +242,4 @@ setInterval(() => {
   }
 }, 5000);
 
-server.listen(PORT, () => console.log("Bursdagsbingo kjører på port " + PORT));
+server.listen(PORT, () => console.log("Bursdagsbingo og quiz kjører på port " + PORT + " (" + quiz.count() + " quiz-spørsmål)"));

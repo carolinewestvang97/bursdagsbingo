@@ -1,4 +1,29 @@
-# Bursdagsbingo (live)
+# Bursdagsbingo + Quiz (live)
+
+To leker i samme server:
+- Bingo:  `/`  (storskjerm: `/#storskjerm`)
+- Quiz:   `/quiz`  (storskjerm: `/quiz#storskjerm`)
+
+## Quiz
+1. Åpne `/quiz#storskjerm` på storskjermen. Der står adressen og rundekoden.
+2. Hvert lag (3–4 personer) deler én telefon, åpner `/quiz`, skriver lagnavn + kode.
+3. Du starter quizen (knappen, eller mellomrom). Spørsmålet vises på storskjermen og på telefonene.
+4. Lagene svarer (trykker på alternativ, eller skriver svaret). Når alle har svart, trykker du «Vis svar» (mellomrom).
+5. Fasit vises, og maskinen retter svarene (tåler småfeil som «vombat»/«wombat»). Du kan trykke ✓/✗ ved et lag for å overstyre.
+6. «Neste spørsmål» (mellomrom). Poengtavlen oppdateres underveis, og til slutt kommer sluttresultatet.
+7. «Start på nytt» nullstiller poengene og tar alle tilbake til lobbyen.
+
+### Rediger spørsmålene
+Alt ligger i `questions.json`. Der kan du endre, legge til og fjerne spørsmål.
+- `type: "choice"` = flervalg. `correct` er en liste med riktige alternativer, talt fra 0 (`[0, 3]` = første og fjerde).
+- `type: "text"` = fritekst. `accept` er godkjente svar. `regex` er valgfritt. `answerText` vises som fasit.
+- `"todo": true` betyr at spørsmålet hoppes over. De to «2 sannheter og en løgn»-spørsmålene ligger der med `todo`.
+  Fyll inn påstandene og fjern linjen `"todo": true` (og sett `correct` til nummeret på løgnen).
+Husk å deploye på nytt etter at du har endret filen.
+
+---
+
+# Bingo
 
 Slik spilles en runde:
 1. Åpne `/#storskjerm` – der står rundekoden. Gjestene åpner lenken og skriver inn navn + kode.
