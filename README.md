@@ -1,5 +1,14 @@
 # Bursdagsbingo (live)
 
+Slik spilles en runde:
+1. Åpne `/#storskjerm` – der står rundekoden. Gjestene åpner lenken og skriver inn navn + kode.
+2. Første som får 4 på rad roper bingo automatisk. Alle brett fryses (grået ut), og du får en gul knapp på storskjermen.
+3. Trykk på knappen, se svarene, og trykk Godkjenn eller Avslå.
+   - Avslag: spillet fortsetter, og personen kan rette opp og rope igjen.
+   - Godkjent: personen får 👑 og spillet fortsetter mot «hele brettet».
+4. Samme prosess for hele brettet. Når begge er godkjent er runden over, og alle ser vinnerne.
+5. «Ny runde» på storskjermen nullstiller brettene til alle.
+
 Liten Node-server (ingen avhengigheter) som viser bingosiden og holder styr på spillerne i sanntid.
 
 ## Kjør lokalt

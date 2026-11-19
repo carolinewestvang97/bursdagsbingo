@@ -145,6 +145,26 @@ dialog .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:16px
 .tag{background:var(--win); color:var(--win-text); border-radius:999px; padding:0 .6em; margin-left:.5em; font-size:.65em; vertical-align:middle}
 .empty{text-align:center; opacity:.8; padding:30px 0}
 #hostMsg{text-align:center; color:#ffd2e2; min-height:1.3em}
+#banner{border-radius:14px; padding:10px 12px; margin:0 0 10px; background:var(--field); font-size:.95rem; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+#banner[hidden]{display:none}
+#banner.alert{background:#ffe3ea; color:#7a1230}
+#banner.win{background:#fff3c2; color:#4d3b00}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #banner.alert{background:#4a1a2c; color:#ffd2e2} :root:not([data-theme="light"]) #banner.win{background:#4a3f10; color:#ffe9a0}}
+.card.locked .grid{pointer-events:none; filter:grayscale(1); opacity:.45}
+.card.locked .footer .btn{pointer-events:none; opacity:.5}
+#winBox{background:rgba(255,255,255,.12); border-radius:18px; padding:12px 18px; margin:0 0 18px; font-size:clamp(1.1rem,3vw,1.7rem); text-align:center}
+#winBox div{margin:2px 0}
+#claimBox button{display:block; width:100%; font:inherit; font-weight:700; font-size:clamp(1.3rem,4vw,2.2rem); background:var(--win); color:var(--win-text); border:0; border-radius:18px; padding:16px; margin:0 0 14px; cursor:pointer; animation:pulse 1.2s ease-in-out infinite}
+#claimBox small{display:block; font-weight:500; font-size:.55em; opacity:.8}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,207,38,.7)}50%{box-shadow:0 0 0 12px rgba(255,207,38,0)}}
+#reviewDialog{width:min(96vw,640px)}
+.review{display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:10px 0}
+.review div{border:2px solid var(--line); border-radius:10px; padding:6px 4px; text-align:center; font-size:clamp(.65rem,2.2vw,.9rem); display:flex; flex-direction:column; justify-content:center; min-height:84px}
+.review div b{display:block; margin-top:4px; font-size:1.05em; color:#c2185b; overflow-wrap:anywhere}
+.review div.hit{background:var(--win); border-color:var(--win); color:var(--win-text)}
+.review div.hit b{color:var(--win-text)}
+.review div.empty{opacity:.5}
+.btn.ok{background:#1f9d55; color:#fff} .btn.no{background:#c4153f; color:#fff}
 #confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:50}
 </style>
 </head>
@@ -154,8 +174,10 @@ dialog .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:16px
   <h1>Bursdagsbingo</h1>
   <p class="hostHint">Gå til bingolenken og skriv inn rundekoden:</p>
   <div class="hostTop"><div class="hostCode" id="hostCode">----</div></div>
-  <div class="hostTools"><input type="text" id="hostCodeIn" maxlength="6" aria-label="Ny kode" placeholder="KODE" autocomplete="off"><button class="btn ghost" id="hostCodeBtn" type="button" style="color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)">Bytt kode</button></div>
+  <div class="hostTools"><input type="text" id="hostCodeIn" maxlength="6" aria-label="Ny kode" placeholder="KODE" autocomplete="off"><button class="btn ghost" id="hostCodeBtn" type="button" style="color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)">Bytt kode</button><button class="btn ghost" id="hostResetBtn" type="button" style="color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)">Ny runde</button></div>
   <p id="hostMsg" role="status"></p>
+  <div id="claimBox"></div>
+  <div id="winBox" hidden></div>
   <div id="hostList"></div>
 </section>
 <main id="app">
@@ -165,10 +187,11 @@ dialog .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:16px
   </div>
   <div class="card">
     <div class="player">
-      <label for="player">Ditt navn</label>
+      <label for="player" id="playerLabel">Ditt navn</label>
       <input type="text" id="player" maxlength="30" placeholder="Skriv navnet ditt" autocomplete="off">
       <button class="chip" id="roundBtn" type="button">Bli med i runde</button>
     </div>
+    <div id="banner" hidden></div>
     <div class="grid" id="grid" role="grid" aria-label="Bingobrett"></div>
     <div class="footer">
       <span class="progress" id="progress"></span>
@@ -206,6 +229,20 @@ dialog .actions{display:flex; gap:8px; justify-content:flex-end; margin-top:16px
     <button class="btn ghost" type="button" id="joinLeave">Spill uten runde</button>
     <button class="btn" type="button" id="joinGo">Bli med</button>
   </div>
+</dialog>
+
+<dialog id="reviewDialog">
+  <h2 id="reviewTitle"></h2>
+  <p class="hint" id="reviewHint"></p>
+  <div class="review" id="reviewGrid"></div>
+  <div class="actions"><button class="btn ghost" type="button" id="reviewClose">Lukk</button><button class="btn no" type="button" id="reviewNo">Avslå</button><button class="btn ok" type="button" id="reviewYes">Godkjenn</button></div>
+</dialog>
+
+<dialog id="resultDialog" class="bingo">
+  <h2>🎉</h2>
+  <p style="font-weight:700;font-size:1.3rem;margin:0 0 8px">Bursdagsbingo vinnere</p>
+  <div id="resultBody" style="font-size:1.1rem"></div>
+  <div class="actions"><button class="btn pink" type="button" id="resultClose">Lukk</button></div>
 </dialog>
 
 <dialog id="resetDialog">
@@ -299,8 +336,9 @@ function render(){
   const filled = state.names.filter(n => n.trim()).length;
   progress.textContent = `${filled} av ${N} ruter fylt`;
   syncPresence(filled, count);
+  if (typeof maybeClaim === "function") maybeClaim();
 
-  if (count > 0 && !state.celebrated){ state.celebrated = true; save(); celebrate(); }
+  if (count > 0 && !state.celebrated && !(conn && conn.code)){ state.celebrated = true; save(); celebrate(); }
   if (count === 0 && state.celebrated){ state.celebrated = false; save(); }
 }
 
@@ -312,6 +350,7 @@ const dlgError = document.getElementById("dlgError");
 let current = -1;
 
 function openCell(i){
+  if (typeof isLocked === "function" && isLocked()) return;
   current = i;
   dlgStatement.textContent = STATEMENTS[state.order[i]];
   dlgName.value = state.names[i];
@@ -386,15 +425,24 @@ const PID = (() => { try { let v = localStorage.getItem("bingo-pid"); if (!v){ v
 const cleanCode = v => (v || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const post = (url, body) => fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+const KIND = { line: "4 på rad", full: "hele brettet" };
 
-var conn = { code: cleanCode(lsGet("bingo-code")), ok: false, last: "" };
+var conn = { code: cleanCode(lsGet("bingo-code")), ok: false, last: "", es: null, inflight: "" };
+var G = null;
 const roundBtn = document.getElementById("roundBtn");
+const card = document.querySelector(".card");
+const banner = document.getElementById("banner");
+const playerLabel = document.getElementById("playerLabel");
+
 function updateChip(){
   if (!conn.code){ roundBtn.textContent = "Bli med i runde"; roundBtn.classList.remove("on"); return; }
   roundBtn.textContent = conn.ok ? "Runde " + conn.code + " ✓" : "Runde " + conn.code + " …";
   roundBtn.classList.toggle("on", conn.ok);
 }
 function currentCounts(){ const { count } = winningCells(); return { filled: state.names.filter(n => n.trim()).length, lines: count }; }
+function isLocked(){ return !!(conn && conn.code && G && G.frozen); }
+
 async function syncPresence(filled, lines, force){
   if (!conn || !conn.code) return;
   const payload = { pid: PID, name: (state.player || "").trim().slice(0, 30) || "Gjest", filled, lines: lines > 0 ? lines : 0, size: N };
@@ -402,7 +450,7 @@ async function syncPresence(filled, lines, force){
   if (!force && key === conn.last) return;
   const code = conn.code;
   try {
-    const r = await fetch("/api/p/" + code, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+    const r = await post("/api/p/" + code, payload);
     if (!r.ok) throw new Error("http " + r.status);
     if (code !== conn.code) return;
     conn.last = key;
@@ -412,8 +460,93 @@ async function syncPresence(filled, lines, force){
     if (conn.ok){ conn.ok = false; updateChip(); }
   }
 }
+
+// --- Spillstatus fra serveren
+function openGameStream(){
+  if (conn.es){ conn.es.close(); conn.es = null; }
+  G = null; renderLockUI();
+  if (!conn.code) return;
+  const code = conn.code;
+  const es = new EventSource("/api/g/" + code + "?pid=" + PID);
+  conn.es = es;
+  es.onmessage = ev => { if (code !== conn.code) return; try { applyGame(JSON.parse(ev.data)); } catch (e) {} };
+}
+let resultShownFor = -1;
+function applyGame(g){
+  const stored = lsGet("bingo-round:" + conn.code);
+  if (stored !== null && Number(stored) !== g.round){
+    // Ny runde: nytt, tomt brett
+    const player = state.player; state = Object.assign(freshBoard(), { player }); save();
+    cellDialog.close(); render();
+    resultShownFor = -1;
+  }
+  lsSet("bingo-round:" + conn.code, String(g.round));
+  G = g; conn.inflight = "";
+  if (isLocked()) { try { cellDialog.close(); } catch (e) {} }
+  renderLockUI();
+  if (g.done && resultShownFor !== g.round){ resultShownFor = g.round; showResult(); }
+  maybeClaim();
+}
+function crowns(pid){
+  if (!G) return "";
+  return (G.winners.line && G.winners.line.pid === pid ? "👑" : "") + (G.winners.full && G.winners.full.pid === pid ? "👑" : "");
+}
+function renderLockUI(){
+  card.classList.toggle("locked", isLocked());
+  playerLabel.textContent = "Ditt navn" + (G ? " " + crowns(PID) : "");
+  banner.className = ""; banner.innerHTML = ""; banner.hidden = true;
+  if (!conn.code || !G) return;
+  const say = (t, cls, btn) => {
+    banner.hidden = false; banner.className = cls || "";
+    const sp = document.createElement("span"); sp.textContent = t; banner.appendChild(sp);
+    if (btn){ const b = document.createElement("button"); b.type = "button"; b.className = "btn pink"; b.textContent = btn.label; b.addEventListener("click", btn.fn); banner.appendChild(b); }
+  };
+  const W = G.winners;
+  if (G.done){
+    say("Runden er over! 👑 4 på rad: " + W.line.name + " · 👑 Hele brettet: " + W.full.name, "win");
+  } else if (G.pending){
+    say(G.pending.pid === PID ? "BINGO! Venter på at bursdagsbarna sjekker svarene dine …" : G.pending.name + " ropte BINGO (" + KIND[G.pending.kind] + ") – venter på godkjenning …", "alert");
+  } else if (G.you.rejected.line || G.you.rejected.full){
+    const k = G.you.rejected.full ? "full" : "line";
+    say("Bingoen din ble avslått. Sjekk svarene dine og prøv igjen.", "alert", { label: "Rop bingo igjen", fn: () => sendClaim(k) });
+  } else if (W.line){
+    say("👑 4 på rad: " + W.line.name + (W.line.pid === PID ? " (du!)" : "") + " – nå jakter vi på hele brettet!", "win");
+  }
+}
+function showResult(){
+  const W = G.winners;
+  const body = document.getElementById("resultBody"); body.innerHTML = "";
+  for (const [k, t] of [["line", "4 på rad"], ["full", "Hele brettet"]]){
+    const d = document.createElement("p"); d.style.margin = ".4em 0";
+    d.textContent = "👑 " + t + ": " + W[k].name + (W[k].pid === PID ? " (du!)" : ""); body.appendChild(d);
+  }
+  try { cellDialog.close(); } catch (e) {}
+  document.getElementById("resultDialog").showModal(); confetti();
+}
+document.getElementById("resultClose").addEventListener("click", () => document.getElementById("resultDialog").close());
+
+// --- Rop bingo
+function boardAnswers(){ return state.order.map((sIdx, i) => ({ s: STATEMENTS[sIdx], n: state.names[i].trim() })); }
+async function sendClaim(kind){
+  if (!conn.code) return;
+  conn.inflight = kind;
+  try { await post("/api/c/" + conn.code, { pid: PID, kind, name: (state.player || "").trim() || "Gjest", answers: boardAnswers() }); } catch (e) { conn.inflight = ""; }
+}
+function maybeClaim(){
+  if (!conn || !conn.code || !G || G.frozen || G.done) return;
+  const { filled, lines } = currentCounts();
+  const kinds = [];
+  if (filled === N && !G.winners.full) kinds.push("full");
+  if (lines > 0 && !G.winners.line) kinds.push("line");
+  for (const k of kinds){
+    if (G.you.pending[k] || G.you.rejected[k] || conn.inflight === k) continue;
+    sendClaim(k); return;
+  }
+}
+
 function connect(){
   conn.ok = false; conn.last = ""; updateChip();
+  openGameStream();
   if (!conn.code) return;
   const c = currentCounts(); syncPresence(c.filled, c.lines, true);
 }
@@ -449,54 +582,127 @@ document.getElementById("joinLeave").addEventListener("click", () => {
   joinDialog.close(); connect();
 });
 
-// Storskjerm
+// ---------- Storskjerm ----------
 const hostEl = document.getElementById("host");
 const hostList = document.getElementById("hostList");
 const hostMsg = document.getElementById("hostMsg");
-const hostState = { code: "", es: null, seen: new Map() };
+const hostRows = new Map();
+const hostState = { code: "", key: "", es: null, players: [], game: null, openClaim: null };
 function newCode(){ const a = "ABCDEFGHJKLMNPRSTUVXYZ"; let c = ""; for (let i = 0; i < 4; i++) c += a[Math.floor(Math.random() * a.length)]; return c; }
-function renderHost(){
-  const rows = Array.from(hostState.seen.values()).sort((a, b) => b.filled - a.filled || a.name.localeCompare(b.name, "no"));
-  hostList.innerHTML = "";
-  if (!rows.length){
-    const p = document.createElement("p"); p.className = "empty"; p.textContent = "Venter på spillere … be gjestene skrive inn koden.";
-    hostList.appendChild(p); return;
-  }
-  for (const r of rows){
-    const row = document.createElement("div");
-    row.className = "row" + (r.live ? "" : " off") + (r.lines > 0 ? " bingo" : "");
-    const top = document.createElement("div"); top.className = "top";
-    const n = document.createElement("span"); n.className = "n"; n.textContent = r.name;
-    if (r.lines > 0){ const t = document.createElement("span"); t.className = "tag"; t.textContent = "BINGO!"; n.appendChild(t); }
-    const c = document.createElement("span"); c.className = "c"; c.textContent = `${r.filled} av ${r.size} ruter`;
-    top.append(n, c);
-    const bar = document.createElement("div"); bar.className = "bar";
-    bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", String(r.size)); bar.setAttribute("aria-valuenow", String(r.filled)); bar.setAttribute("aria-label", r.name);
-    const i = document.createElement("i"); bar.appendChild(i);
-    row.append(top, bar); hostList.appendChild(row);
-    requestAnimationFrame(() => requestAnimationFrame(() => { i.style.width = (r.filled / r.size * 100) + "%"; }));
-  }
+function newKey(){ const a = new Uint8Array(20); crypto.getRandomValues(a); return Array.from(a, b => b.toString(36).padStart(2, "0")).join("").slice(0, 32); }
+function hostCrowns(pid){
+  const W = hostState.game && hostState.game.winners; if (!W) return "";
+  return (W.line && W.line.pid === pid ? "👑" : "") + (W.full && W.full.pid === pid ? "👑" : "");
 }
-function hostConnect(){
-  if (hostState.es) hostState.es.close();
-  hostState.seen = new Map();
+function renderHost(){
+  const g = hostState.game;
+  // Vinnere
+  const winBox = document.getElementById("winBox"); winBox.innerHTML = "";
+  if (g && (g.winners.line || g.winners.full)){
+    winBox.hidden = false;
+    if (g.done){ const h = document.createElement("div"); h.style.cssText = "font-family:'Bagel Fat One',sans-serif;font-size:1.6em;margin-bottom:6px"; h.textContent = "Bursdagsbingo vinnere"; winBox.appendChild(h); }
+    for (const [k, t] of [["line", "4 på rad"], ["full", "Hele brettet"]]){
+      const d = document.createElement("div");
+      d.textContent = g.winners[k] ? "👑 " + t + ": " + g.winners[k].name : t + ": …";
+      if (!g.winners[k]) d.style.opacity = ".6";
+      winBox.appendChild(d);
+    }
+  } else winBox.hidden = true;
+  // Ventende krav
+  const cb = document.getElementById("claimBox");
+  const ckey = g && g.queue.length ? g.queue[0].id + ":" + g.queue.length : "";
+  if (cb.dataset.k !== ckey){
+   cb.dataset.k = ckey; cb.innerHTML = "";
+   if (g && g.queue.length){
+    const c = g.queue[0];
+    const b = document.createElement("button"); b.type = "button";
+    b.textContent = "BINGO! " + c.name + " – " + KIND[c.kind];
+    const sm = document.createElement("small"); sm.textContent = "Trykk for å se svarene" + (g.queue.length > 1 ? " · " + (g.queue.length - 1) + " til venter" : ""); b.appendChild(sm);
+    b.addEventListener("click", () => openReview(c.id));
+    cb.appendChild(b);
+   }
+  }
+  if (hostState.openClaim !== null && !(g && g.queue.some(c => c.id === hostState.openClaim))) closeReview();
+  // Spillerliste (oppdateres på stedet, så stolpene glir i stedet for å starte på nytt)
+  const rows = [...hostState.players].sort((a, b) => b.filled - a.filled || a.name.localeCompare(b.name, "no"));
+  const empty = document.getElementById("hostEmpty");
+  if (!rows.length){
+    if (!empty){ const p = document.createElement("p"); p.id = "hostEmpty"; p.className = "empty"; p.textContent = "Venter på spillere … be gjestene skrive inn koden."; hostList.appendChild(p); }
+  } else if (empty) empty.remove();
+  const alive = new Set();
+  for (const r of rows){
+    alive.add(r.pid);
+    let el = hostRows.get(r.pid);
+    if (!el){
+      el = document.createElement("div"); el.className = "row";
+      el.innerHTML = '<div class="top"><span class="n"></span><span class="c"></span></div><div class="bar" role="progressbar" aria-valuemin="0"><i></i></div>';
+      hostRows.set(r.pid, el);
+    }
+    const live = Number(r.age) < 25000;
+    el.classList.toggle("off", !live);
+    const size = Math.max(1, Math.min(100, Number(r.size) || 16)), filled = Math.max(0, Math.min(size, Number(r.filled) || 0));
+    el.querySelector(".n").textContent = r.name + (hostCrowns(r.pid) ? " " + hostCrowns(r.pid) : "");
+    el.querySelector(".c").textContent = `${filled} av ${size} ruter`;
+    const bar = el.querySelector(".bar");
+    bar.setAttribute("aria-valuemax", String(size)); bar.setAttribute("aria-valuenow", String(filled)); bar.setAttribute("aria-label", r.name);
+    hostList.appendChild(el);   // flytter raden til riktig plass
+    requestAnimationFrame(() => requestAnimationFrame(() => { el.querySelector("i").style.width = (filled / size * 100) + "%"; }));
+  }
+  for (const [pid, el] of hostRows) if (!alive.has(pid)){ el.remove(); hostRows.delete(pid); }
+}
+
+// Gjennomgang av et bingo-krav
+const reviewDialog = document.getElementById("reviewDialog");
+function closeReview(){ hostState.openClaim = null; try { reviewDialog.close(); } catch (e) {} }
+function openReview(id){
+  const c = hostState.game && hostState.game.queue.find(x => x.id === id); if (!c) return;
+  hostState.openClaim = id;
+  document.getElementById("reviewTitle").textContent = c.name + " roper BINGO – " + KIND[c.kind];
+  document.getElementById("reviewHint").textContent = c.kind === "line"
+    ? "Sjekk at navnene i de gule rutene passer påstandene."
+    : "Sjekk at navnene i alle rutene passer påstandene.";
+  const hit = new Set();
+  if (c.kind === "line") for (const line of LINES) if (line.every(i => c.answers[i].n)) line.forEach(i => hit.add(i));
+  const grid = document.getElementById("reviewGrid"); grid.innerHTML = "";
+  c.answers.forEach((a, i) => {
+    const d = document.createElement("div");
+    d.className = (hit.has(i) ? "hit" : "") + (a.n ? "" : " empty");
+    const t = document.createElement("span"); t.textContent = a.s;
+    const b = document.createElement("b"); b.textContent = a.n || "–";
+    d.append(t, b); grid.appendChild(d);
+  });
+  if (!reviewDialog.open) reviewDialog.showModal();
+}
+async function decide(accept){
+  const id = hostState.openClaim; if (id === null) return;
+  try { await post("/api/h/" + hostState.code + "/decide", { key: hostState.key, id, accept }); } catch (e) { hostMsg.textContent = "Fikk ikke sendt avgjørelsen – prøv igjen."; }
+  closeReview();
+}
+document.getElementById("reviewYes").addEventListener("click", () => decide(true));
+document.getElementById("reviewNo").addEventListener("click", () => decide(false));
+document.getElementById("reviewClose").addEventListener("click", closeReview);
+
+async function hostConnect(){
+  if (hostState.es){ hostState.es.close(); hostState.es = null; }
+  hostState.players = []; hostState.game = null; closeReview(); hostRows.clear(); hostList.innerHTML = "";
   document.getElementById("hostCode").textContent = hostState.code;
   hostMsg.textContent = "Kobler til …"; renderHost();
-  const es = new EventSource("/api/s/" + hostState.code);
+  const code = hostState.code;
+  hostState.key = lsGet("bingo-host-key:" + code) || newKey();
+  lsSet("bingo-host-key:" + code, hostState.key);
+  try {
+    const r = await post("/api/h/" + code + "/auth", { key: hostState.key });
+    if (code !== hostState.code) return;
+    if (r.status === 403){ hostMsg.textContent = "Koden " + code + " brukes av en annen storskjerm. Trykk «Bytt kode»."; return; }
+    if (!r.ok) throw new Error("http " + r.status);
+  } catch (e) { hostMsg.textContent = "Fikk ikke kontakt med serveren – prøv å laste siden på nytt."; return; }
+  const es = new EventSource("/api/s/" + code + "?key=" + encodeURIComponent(hostState.key));
   hostState.es = es;
   es.onopen = () => { hostMsg.textContent = ""; };
   es.onerror = () => { hostMsg.textContent = "Mistet kontakten med serveren – prøver igjen …"; };
   es.onmessage = ev => {
-    let list = []; try { list = JSON.parse(ev.data); } catch (e) { return; }
-    hostState.seen = new Map();
-    for (const p of list){
-      const size = Math.max(1, Math.min(100, Number(p.size) || 16));
-      hostState.seen.set(p.pid, {
-        name: String(p.name || "Gjest").slice(0, 30),
-        filled: Math.max(0, Math.min(size, Number(p.filled) || 0)),
-        lines: Number(p.lines) > 0 ? Number(p.lines) : 0, size, live: Number(p.age) < 25000
-      });
-    }
+    let d; try { d = JSON.parse(ev.data); } catch (e) { return; }
+    hostState.players = d.players || []; hostState.game = d.game || null;
     hostMsg.textContent = ""; renderHost();
   };
 }
@@ -512,6 +718,16 @@ document.getElementById("hostCodeBtn").addEventListener("click", () => {
   const inp = document.getElementById("hostCodeIn");
   const c = cleanCode(inp.value) || newCode();
   hostState.code = c; lsSet("bingo-host-code", c); inp.value = ""; hostConnect();
+});
+let resetArmed = 0;
+document.getElementById("hostResetBtn").addEventListener("click", async e => {
+  const b = e.currentTarget;
+  if (!resetArmed){
+    resetArmed = setTimeout(() => { resetArmed = 0; b.textContent = "Ny runde"; }, 4000);
+    b.textContent = "Sikker? Trykk igjen"; return;
+  }
+  clearTimeout(resetArmed); resetArmed = 0; b.textContent = "Ny runde";
+  try { await post("/api/h/" + hostState.code + "/reset", { key: hostState.key }); } catch (err) { hostMsg.textContent = "Fikk ikke startet ny runde."; }
 });
 
 if (location.hash === "#storskjerm") startHost();
