@@ -41,7 +41,7 @@ input[type=text]:focus{outline:none; border-color:var(--pink)}
 .opt.dim{opacity:.35}
 .status{margin-top:12px; font-weight:500; color:var(--muted)}
 .result{border-radius:16px; padding:14px; font-weight:700; font-size:1.3rem; text-align:center; margin-bottom:12px}
-.result.ok{background:#d9f5e3; color:#0d5a2d} .result.no{background:#ffe3ea; color:#7a1230}
+.result.ok{background:#d9f5e3; color:#0d5a2d} .result.no{background:#ffe3ea; color:#7a1230} .result.zero{background:#ececf6; color:#3a3868}
 .fact{margin:8px 0; color:var(--muted)} .fact b{color:var(--text)}
 .lb{list-style:none; margin:10px 0 0; padding:0}
 .lb li{display:grid; grid-template-columns:2.2em 1fr auto; gap:8px; align-items:center; padding:7px 10px; border-radius:12px; margin:4px 0; background:var(--field); position:relative; overflow:hidden}
@@ -61,7 +61,7 @@ label{font-weight:500; display:block; margin:10px 0 4px}
 .hbar{display:flex; flex-wrap:wrap; gap:14px; justify-content:center; align-items:center; margin:8px 0 18px}
 .hcode{font-family:"Bagel Fat One",sans-serif; font-size:clamp(2rem,6vw,3.6rem); letter-spacing:.16em; background:var(--gold); color:#1d1b3a; border-radius:16px; padding:2px 22px 2px 30px; box-shadow:0 6px 0 rgba(0,0,0,.25)}
 .hurl{font-size:clamp(1rem,2.3vw,1.4rem); opacity:.9}
-.hgrid{display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:24px; align-items:start}
+.hgrid{display:grid; grid-template-columns:minmax(0,1fr) 400px; gap:24px; align-items:start}
 @media (max-width:1000px){.hgrid{grid-template-columns:1fr}}
 .panel{background:rgba(255,255,255,.1); border-radius:22px; padding:18px 22px}
 .panel h2{font-size:1.5rem; margin-bottom:6px}
@@ -94,6 +94,15 @@ label{font-weight:500; display:block; margin:10px 0 4px}
 .pod{background:rgba(255,255,255,.14); border-radius:18px 18px 0 0; padding:14px 18px; text-align:center; min-width:150px; font-size:clamp(1.1rem,2.5vw,1.8rem); font-weight:700}
 .pod.p1{background:var(--gold); color:#1d1b3a; padding-top:34px; padding-bottom:30px} .pod.p2{padding-top:22px;padding-bottom:16px} .pod.p3{padding-top:12px}
 .pod small{display:block; font-weight:500; opacity:.8; font-size:.65em}
+.imgBox{margin-top:16px; aspect-ratio:1/1; width:100%; border-radius:18px; background:rgba(0,0,0,.25); overflow:hidden; display:flex; align-items:center; justify-content:center}
+.imgBox img{width:100%; height:100%; object-fit:contain; display:block}
+.timg{width:100%; aspect-ratio:1/1; object-fit:contain; border-radius:14px; background:var(--field); margin:0 0 14px; display:block}
+.opt.multi{position:relative; padding-left:48px}
+.opt.multi::before{content:""; position:absolute; left:14px; top:50%; width:22px; height:22px; margin-top:-11px; border:3px solid #fff; border-radius:6px}
+.opt.multi.sel::before{background:#fff}
+.opt.multi.sel::after{content:"✓"; position:absolute; left:18px; top:50%; margin-top:-13px; color:#1d1b3a; font-weight:700}
+.rule{color:var(--muted); font-size:.9rem; margin:-6px 0 12px}
+.tog.zero{background:#6b6a8c; color:#fff}
 .msg{text-align:center; min-height:1.3em; color:#ffd2e2}
 </style>
 </head>
@@ -127,7 +136,7 @@ label{font-weight:500; display:block; margin:10px 0 4px}
   </div>
   <div class="hgrid">
     <div id="hMain"></div>
-    <aside class="panel"><h2 id="hBoardTitle">Lag</h2><ol class="lb" id="hBoard"></ol></aside>
+    <aside><div class="panel"><h2 id="hBoardTitle">Lag</h2><ol class="lb" id="hBoard"></ol></div><div class="imgBox" id="hImg" hidden><img id="hImgEl" alt=""></div></aside>
   </div>
   <div class="hactions" style="justify-content:center;margin-top:26px">
     <input type="text" id="hCodeIn" maxlength="6" placeholder="KODE" aria-label="Ny kode" style="width:9ch;text-transform:uppercase;text-align:center;letter-spacing:.2em">
@@ -160,7 +169,7 @@ function renderBoard(ol, board, opts){
 }
 
 /* =================== LAG =================== */
-const T = { code: cleanCode(lsGet("quiz-code")), name: lsGet("quiz-name") || "", tid: lsGet("quiz-tid") || "", es: null, sig: "", view: null, typed: "" };
+const T = { selQ: -1, sel: new Set(), code: cleanCode(lsGet("quiz-code")), name: lsGet("quiz-name") || "", tid: lsGet("quiz-tid") || "", es: null, sig: "", view: null, typed: "" };
 if (!T.tid){ T.tid = rnd(6).slice(0, 12); lsSet("quiz-tid", T.tid); }
 
 async function teamJoin(code, name){
@@ -209,9 +218,14 @@ $("tLeave").addEventListener("click", () => teamLeave(""));
 async function sendAnswer(body){
   try { await post("/api/quiz/" + T.code + "/answer", Object.assign({ tid: T.tid }, body)); } catch (e) {}
 }
+function addImage(card, q){
+  if (!q.image) return;
+  const im = el("img", "timg"); im.src = q.image; im.alt = ""; im.addEventListener("error", () => im.remove());
+  card.appendChild(im);
+}
 function teamRender(v){
   T.view = v;
-  const sig = JSON.stringify([v.state, v.q && v.q.i, v.answered, v.myAnswer, v.myIdx, v.reveal, v.board, v.you, v.teams]);
+  const sig = JSON.stringify([v.state, v.q && v.q.i, v.answered, v.myAnswer, v.myIdx, v.myIdxs, v.reveal, v.board, v.you, v.teams]);
   if (sig === T.sig) return;
   T.sig = sig;
   const body = $("tBody");
@@ -228,7 +242,20 @@ function teamRender(v){
   else if (v.state === "question"){
     const q = v.q, c = el("div", "card");
     c.append(el("span", "cat", q.cat + " · " + (q.i + 1) + " av " + q.n), el("p", "qtext", q.q));
-    if (q.type === "choice"){
+    addImage(c, q);
+    if (q.rule) c.appendChild(el("p", "rule", q.rule));
+    if (q.type === "choice" && q.multi){
+      if (T.selQ !== q.i){ T.selQ = q.i; T.sel = new Set(v.myIdxs || []); }
+      const g = el("div", "opts"), btns = [];
+      q.options.forEach((o, i) => {
+        const b = el("button", "opt multi" + (T.sel.has(i) ? " sel" : ""), o); b.type = "button"; btns.push(b);
+        b.addEventListener("click", () => { if (T.sel.has(i)) T.sel.delete(i); else T.sel.add(i); b.classList.toggle("sel", T.sel.has(i)); });
+        g.appendChild(b);
+      });
+      const sb = el("button", "btn pink", v.answered ? "Endre svar" : "Send svar"); sb.type = "button"; sb.style.cssText = "width:100%;margin-top:12px";
+      sb.addEventListener("click", () => sendAnswer({ idxs: [...T.sel] }));
+      c.append(g, sb);
+    } else if (q.type === "choice"){
       const g = el("div", "opts");
       q.options.forEach((o, i) => {
         const b = el("button", "opt" + (v.myIdx === i ? " sel" : ""), o); b.type = "button";
@@ -250,7 +277,10 @@ function teamRender(v){
   else if (v.state === "reveal"){
     const q = v.q, rv = v.reveal, c = el("div", "card");
     c.append(el("span", "cat", q.cat + " · " + (q.i + 1) + " av " + q.n), el("p", "qtext", q.q));
-    c.appendChild(el("div", "result " + (rv.ok ? "ok" : "no"), rv.ok ? "Riktig! +" + rv.gained + " poeng 🎉" : (v.answered ? "Ikke denne gangen" : "Ingen svar")));
+    addImage(c, q);
+    const g = rv.gained;
+    c.appendChild(el("div", "result " + (g > 0 ? "ok" : g < 0 ? "no" : "zero"),
+      g > 0 ? "Riktig! +" + g + " poeng 🎉" : g < 0 ? "Feil: " + g + " poeng" : (v.answered ? "Ingen poeng denne gangen" : "Ingen svar")));
     const f1 = el("p", "fact"); f1.append("Riktig svar: ", Object.assign(el("b"), { textContent: rv.answer })); c.appendChild(f1);
     if (v.myAnswer) { const f2 = el("p", "fact"); f2.append("Deres svar: ", Object.assign(el("b"), { textContent: v.myAnswer })); c.appendChild(f2); }
     if (rv.explain) c.appendChild(el("p", "fact", rv.explain));
@@ -297,8 +327,9 @@ function hostRender(v){
   }
   else if (v.state === "question" || v.state === "reveal"){
     const q = v.q;
-    p.appendChild(el("span", "chip", q.cat + " · Spørsmål " + (q.i + 1) + " av " + q.n + (q.points > 1 ? " · " + q.points + " poeng" : "")));
+    p.appendChild(el("span", "chip", q.cat + " · Spørsmål " + (q.i + 1) + " av " + q.n + (q.points > 1 ? " · maks " + q.points + " poeng" : "")));
     p.appendChild(el("div", "hq" + (q.q.length > 120 ? " long" : ""), q.q));
+    if (q.rule) p.appendChild(el("p", "expl", q.rule));
     if (q.type === "choice"){
       const g = el("div", "hopts");
       q.options.forEach((o, i) => {
@@ -314,11 +345,11 @@ function hostRender(v){
     } else {
       const ab = el("div", "answerBox"); ab.append(el("small", "", "Riktig svar"), document.createTextNode(v.reveal.answer)); p.appendChild(ab);
       if (v.reveal.explain) p.appendChild(el("p", "expl", v.reveal.explain));
-      p.appendChild(el("p", "hint", "Trykk på ✓/✗ for å overstyre et lag hvis maskinen vurderte feil."));
+      p.appendChild(el("p", "hint", "Trykk på poengknappen ved et lag for å overstyre hvis maskinen vurderte feil."));
       v.results.forEach(r => {
         const row = el("div", "res");
         row.append(el("span", "rn", r.name), el("span", "ra", r.text == null ? "(ikke svart)" : r.text));
-        const t = el("button", "tog " + (r.ok ? "ok" : "no"), r.ok ? "✓ +" + q.points : "✗ 0"); t.type = "button";
+        const pv = r.points, t = el("button", "tog " + (pv > 0 ? "ok" : pv < 0 ? "no" : "zero"), pv > 0 ? "✓ +" + pv : pv < 0 ? "✗ −" + (-pv) : "0"); t.type = "button";
         t.addEventListener("click", () => hostAct("toggle", { tid: r.tid })); row.appendChild(t); p.appendChild(row);
       });
       const a = el("div", "hactions"); a.appendChild(primary(q.i + 1 >= q.n ? "Se sluttresultat" : "Neste spørsmål")); a.appendChild(el("span", "hint", "Mellomrom går videre")); p.appendChild(a);
@@ -338,6 +369,9 @@ function hostRender(v){
     p.appendChild(el("p", "hint", "Takk for at dere var med! «Start på nytt» lar lagene spille en ny runde."));
   }
   main.appendChild(p);
+  const img = v.q && v.q.image;
+  $("hImg").hidden = !img;
+  if (img){ const im = $("hImgEl"); if (im.getAttribute("src") !== img){ im.onerror = () => { $("hImg").hidden = true; }; im.onload = () => { $("hImg").hidden = false; }; im.src = img; } }
 }
 async function hostConnect(){
   if (H.es){ H.es.close(); H.es = null; }

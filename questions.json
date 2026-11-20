@@ -1,26 +1,38 @@
 {
-  "_hjelp": "Rediger spørsmålene her. type: 'choice' (flervalg, 'correct' = liste med riktige alternativ-numre fra 0) eller 'text' (fritekst, 'accept' = godkjente svar, valgfritt 'regex'). 'answerText' vises som fasit. 'todo': true hopper over spørsmålet til du har fylt det inn og fjernet todo. 'points' er valgfritt (standard 1).",
+  "_hjelp": "Rediger spørsmålene her. type: 'choice' (flervalg; 'correct' = liste med riktige alternativer talt fra 0) eller 'text' (fritekst; 'accept' = godkjente svar, valgfritt 'regex'). 'multi': true lar lagene velge flere alternativer, med poengregel i 'scoring' (perCorrect, perWrong, min). 'answerText' vises som fasit. 'image': filnavn i mappen public/img (f.eks. 'status1.png') eller en full https-adresse; vises som firkantet bilde under poengtavlen og på lagenes telefoner. 'points' er poeng for riktig svar (standard 1). 'todo': true hopper over spørsmålet.",
   "questions": [
-    { "cat": "Om oss", "q": "Hvem sa: «Ikke kom på jobb imorra»", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [1], "answerText": "Gustav" },
-    { "cat": "Om oss", "q": "Hvem sa: «Jeg er så glad i jul»", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [0], "answerText": "Caroline" },
-    { "cat": "Om oss", "q": "2 sannheter og en løgn om Gustav", "type": "choice", "options": ["Påstand 1 (fyll inn)", "Påstand 2 (fyll inn)", "Påstand 3 (fyll inn)"], "correct": [0], "answerText": "(fyll inn hvilken som er løgnen)", "todo": true },
-    { "cat": "Om oss", "q": "2 sannheter og en løgn om Caroline", "type": "choice", "options": ["Påstand 1 (fyll inn)", "Påstand 2 (fyll inn)", "Påstand 3 (fyll inn)"], "correct": [0], "answerText": "(fyll inn hvilken som er løgnen)", "todo": true },
-    { "cat": "Om oss", "q": "Hvor ble Gustav født?", "type": "text", "accept": ["Belgia", "Belgium", "Belgique"], "answerText": "Belgia" },
+    { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [1], "answerText": "Gustav", "image": "jb1.png" },
+    { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [1], "answerText": "Caroline", "image": "life-is-short.png" },
+    { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [0], "answerText": "Caroline", "image": "jb2.png" },
+    { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [0], "answerText": "Gustav", "image": "poledancing.png" },
+
+    { "cat": "Om oss", "q": "2 sannheter og en løgn om Gustav. Hvilken er løgnen?", "type": "choice",
+      "options": ["Har kommet hjem og funnet inngangsdøra si på vidt gap", "Har blitt fanget i en heis i over en time", "Har blitt jaget av en kalkun"],
+      "correct": [1], "answerText": "Løgnen: Gustav har blitt fanget i en heis i over en time" },
+    { "cat": "Om oss", "q": "2 sannheter og en løgn om Caroline. Hvilken er løgnen?", "type": "choice",
+      "options": ["Falt av en elefant i Thailand", "Nesten blitt kidnappet i Vietnam", "Ranet på åpen gate i Australia"],
+      "correct": [0], "answerText": "Løgnen: Caroline har falt av en elefant i Thailand" },
+
+    { "cat": "Om oss", "q": "Hvor ble Gustav født?", "type": "text", "accept": ["Belgia", "Brussel", "Brussels", "Bruxelles", "Belgium", "Belgique"], "answerText": "Belgia (Brussel)" },
     { "cat": "Om oss", "q": "Hva er Gustavs første kjæledyr?", "type": "text", "accept": ["Marsvin", "Et marsvin"], "answerText": "Marsvin" },
-    { "cat": "Om oss", "q": "Hvilket team jobber Gustav og Caroline på?", "type": "choice", "options": ["Team Økonomi", "Team Arkiv", "Team Katalog", "Team KI"], "correct": [0, 3], "answerText": "Team Økonomi og Team KI" },
+    { "cat": "Om oss", "q": "Hvilket team jobber Gustav og Caroline på?", "type": "choice", "multi": true,
+      "options": ["Team Økonomi", "Team Arkiv", "Team Katalog", "Team KI"], "correct": [0, 3],
+      "scoring": { "perCorrect": 1, "perWrong": -1, "min": -1 },
+      "rule": "Velg alle du tror er riktige. +1 for hvert riktig, −1 for hvert feil (aldri under −1).",
+      "answerText": "Team Økonomi og Team KI" },
     { "cat": "Om oss", "q": "Hva jobber Carro med én helg i måneden?", "type": "choice", "options": ["Jobber som personlig assistent", "Jobber som danser", "Jobber overtid", "Jobber på gård"], "correct": [0], "answerText": "Jobber som personlig assistent" },
     { "cat": "Om oss", "q": "Hvilken farge er bilen til Carro?", "type": "text", "accept": ["Blå", "Blå bil"], "answerText": "Blå" },
     { "cat": "Om oss", "q": "Hvem er eldst av Carro og Gustav?", "type": "choice", "options": ["Carro", "Gustav"], "correct": [0], "answerText": "Carro" },
     { "cat": "Om oss", "q": "Hvem har bursdag først av Carro og Gustav?", "type": "choice", "options": ["Carro", "Gustav"], "correct": [0], "answerText": "Carro" },
 
-    { "cat": "Dyr", "q": "Hvilket dyr har nesten like fingeravtrykk som mennesker?", "type": "text", "accept": ["Koala", "Koalabjørn", "Koalaen"], "answerText": "Koala" },
-    { "cat": "Dyr", "q": "Hvilket dyr lager kubeformet avføring?", "type": "text", "accept": ["Wombat", "Vombat", "Wombaten"], "answerText": "Wombat (vombat)" },
-    { "cat": "Dyr", "q": "Hvor mange øyelokk har en kamel?", "type": "text", "accept": ["3", "tre"], "answerText": "3" },
-    { "cat": "Dyr", "q": "Hva kalles en gruppe flamingoer?", "type": "text", "accept": ["Flamboyance", "A flamboyance"], "answerText": "En flamboyance" },
+    { "cat": "Dyr", "q": "Hvilket dyr har nesten like fingeravtrykk som mennesker?", "type": "text", "accept": ["Koala", "Koalabjørn", "Koalaen"], "answerText": "Koala", "image": "avtrykk.png" },
+    { "cat": "Dyr", "q": "Hvilket dyr har kubeformet avføring", "type": "text", "accept": ["Wombat", "Vombat", "Wombaten"], "answerText": "Wombat (vombat)" ,"image": "feces.png" },
+    { "cat": "Dyr", "q": "Hvor mange øyelokk har en kamel?", "type": "text", "accept": ["6", "seks"], "answerText": "6 (3 per øye)" ,"image": "camel.png"},
+    { "cat": "Dyr", "q": "Hva heter en gruppe flamingoer (på engelsk)?", "type": "text", "accept": ["Flamboyance", "A flamboyance"], "answerText": "A flamboyance","image": "flamingo.png" },
 
-    { "cat": "IT", "q": "Hva betyr Wi-Fi?", "type": "text", "accept": ["Ingenting", "Ingen ting", "Ikke noe", "Det betyr ingenting"], "answerText": "Ingenting", "explain": "Wi-Fi er bare et navn og står ikke for noe." },
-    { "cat": "IT", "q": "Hva står API for?", "type": "text", "accept": ["Application Programming Interface"], "answerText": "Application Programming Interface" },
-    { "cat": "IT", "q": "Hvor ofte kjører denne cron-jobben?   5 * * * *", "type": "text", "accept": ["En gang i timen", "Hver time", "1 gang i timen", "En gang per time"], "regex": "(gang|hver|per|1x).*time|time.*(over|gang|hver)", "answerText": "En gang i timen (5 over hel time)" },
-    { "cat": "IT", "q": "En Deployment med replicas: 4, revisionHistoryLimit: 10 og strategy RollingUpdate (maxSurge: 1, maxUnavailable: 0) får ny pod-template-hash etter en kubectl apply. Containerne har en readinessProbe med httpGet mot /actuator/health/readiness, initialDelaySeconds: 15 og periodSeconds: 5. Hva er det høyeste antallet pods Deployment-controlleren tillater samtidig under rollouten?", "type": "text", "accept": ["5", "fem"], "answerText": "5", "explain": "replicas (4) + maxSurge (1) = 5. Probe-innstillingene påvirker ikke taket." }
+    { "cat": "IT", "q": "Hva står Wi-Fi for?", "type": "text", "accept": ["Ingenting", "Ingen ting", "Ikke noe", "Det betyr ingenting"], "answerText": "Ingenting", "explain": "Wi-Fi er bare et navn og står ikke for noe." ,"image": "wifi.png"},
+    { "cat": "IT", "q": "Hva står API for?", "type": "text", "accept": ["Application Programming Interface"], "answerText": "Application Programming Interface","image": "api.png" },
+    { "cat": "IT", "q": "Hvor ofte kjører denne cron-jobben? (5 * * * *)", "type": "text", "accept": ["En gang i timen", "Hver time", "1 gang i timen", "En gang per time"], "regex": "(gang|hver|per|1x).*time|time.*(over|gang|hver)", "answerText": "En gang i timen (5 over hel time)" ,"image": "cronjob.png"},
+    { "cat": "IT", "q": "En Deployment med replicas: 4, revisionHistoryLimit: 10 og strategy RollingUpdate (maxSurge: 1, maxUnavailable: 0) får ny pod-template-hash etter en kubectl apply. Containerne har en readinessProbe med httpGet mot /actuator/health/readiness, initialDelaySeconds: 15 og periodSeconds: 5. Hva er det høyeste antallet pods Deployment-controlleren tillater samtidig under rollouten?", "type": "text", "accept": ["5", "fem"], "answerText": "5", "explain": "replicas (4) + maxSurge (1) = 5. Probe-innstillingene påvirker ikke taket." ,"image": "argo.png"}
   ]
 }

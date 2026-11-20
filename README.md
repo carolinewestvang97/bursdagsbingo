@@ -13,12 +13,22 @@ To leker i samme server:
 6. «Neste spørsmål» (mellomrom). Poengtavlen oppdateres underveis, og til slutt kommer sluttresultatet.
 7. «Start på nytt» nullstiller poengene og tar alle tilbake til lobbyen.
 
+### Bilder
+Legg bildene i mappen `public/img/` og skriv filnavnet på spørsmålet i `questions.json`, f.eks. `"image": "status1.png"`.
+Bildet vises firkantet under poengtavlen på storskjermen og i spørsmålskortet på lagenes telefoner.
+Du kan bruke bilde på alle spørsmål. «Hvem skrev denne Facebook-statusen?» forventer `status1.png` og `status2.png`.
+Fins ikke bildet, skjules plassen. Husk å deploye på nytt etter at du har lagt til bilder.
+
+### Flervalg med poengregel
+`"multi": true` lar lagene velge flere alternativer. Poengregelen står i `"scoring"`: `perCorrect` (poeng per riktig),
+`perWrong` (poeng per feil, negativt) og `min` (laveste poengsum). Team-spørsmålet bruker +1 / −1 / min −1, altså
+2 poeng for begge riktige, 1 for én riktig, og −1 hvis alle valgene er feil.
+
 ### Rediger spørsmålene
 Alt ligger i `questions.json`. Der kan du endre, legge til og fjerne spørsmål.
 - `type: "choice"` = flervalg. `correct` er en liste med riktige alternativer, talt fra 0 (`[0, 3]` = første og fjerde).
 - `type: "text"` = fritekst. `accept` er godkjente svar. `regex` er valgfritt. `answerText` vises som fasit.
-- `"todo": true` betyr at spørsmålet hoppes over. De to «2 sannheter og en løgn»-spørsmålene ligger der med `todo`.
-  Fyll inn påstandene og fjern linjen `"todo": true` (og sett `correct` til nummeret på løgnen).
+- `"todo": true` betyr at spørsmålet hoppes over.
 Husk å deploye på nytt etter at du har endret filen.
 
 ---

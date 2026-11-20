@@ -1,0 +1,4 @@
+Legg bildene til quizen i denne mappen (png, jpg, webp eller gif), helst firkantede.
+Så skriver du filnavnet i questions.json på spørsmålet, f.eks.:  "image": "status1.png"
+Spørsmålene «Hvem skrev denne Facebook-statusen?» forventer status1.png og status2.png.
+Husk å deploye på nytt etter at du har lagt til bildene.

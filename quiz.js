@@ -42,9 +42,7 @@ function lev(a, b) {
     dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
   return dp[a.length][b.length];
 }
-function judge(q, ans) {
-  if (!ans) return false;
-  if (q.type === "choice") return Array.isArray(q.correct) && q.correct.includes(ans.idx);
+function textMatch(q, ans) {
   const n = dropArticle(norm(ans.text));
   if (!n) return false;
   for (const acc of q.accept || []) {
@@ -56,10 +54,35 @@ function judge(q, ans) {
   if (q.regex) { try { if (new RegExp(q.regex, "i").test(norm(ans.text))) return true; } catch (e) {} }
   return false;
 }
+// Regler for flervalg: +perCorrect per riktig, +perWrong (negativt) per feil, aldri under min og aldri over maks
+function sc(q) { return Object.assign({ perCorrect: 1, perWrong: -1, min: -1 }, q.scoring || {}); }
+function maxPts(q) {
+  if (q.type === "choice" && q.multi) return (q.correct || []).length * sc(q).perCorrect;
+  return Number(q.points) || 1;
+}
+function minPts(q) { return q.type === "choice" && q.multi ? sc(q).min : 0; }
+// Poeng for et svar (0 hvis ikke svart)
+function judge(q, ans) {
+  if (!ans) return 0;
+  if (q.type === "choice") {
+    if (q.multi) {
+      const idxs = Array.isArray(ans.idxs) ? ans.idxs : [];
+      if (!idxs.length) return 0;
+      const c = idxs.filter(i => q.correct.includes(i)).length, w = idxs.length - c, k = sc(q);
+      return Math.max(k.min, Math.min(maxPts(q), c * k.perCorrect + w * k.perWrong));
+    }
+    return Array.isArray(q.correct) && q.correct.includes(ans.idx) ? maxPts(q) : 0;
+  }
+  return textMatch(q, ans) ? maxPts(q) : 0;
+}
+// Verdier verten kan veksle mellom ved overstyring
+function allowed(q) {
+  if (q.type === "choice" && q.multi) { const out = []; for (let v = maxPts(q); v >= minPts(q); v--) out.push(v); return out; }
+  return [maxPts(q), 0];
+}
 
 // ---------- Visning ----------
-const pts = i => (Q[i] && Number(Q[i].points)) || 1;
-function scoreOf(t) { let s = 0; for (const [i, ok] of Object.entries(t.ok)) if (ok) s += pts(Number(i)); return s; }
+function scoreOf(t) { let s = 0; for (const v of Object.values(t.pts)) s += v; return s; }
 function board(r) {
   const arr = [...r.teams.values()].map(t => ({ tid: t.tid, name: t.name, score: scoreOf(t), answered: r.answers.has(t.tid) }));
   arr.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, "no"));
@@ -69,12 +92,13 @@ function board(r) {
 }
 function qPublic(i) {
   const q = Q[i]; if (!q) return null;
-  return { i, n: Q.length, cat: q.cat || "", q: q.q, type: q.type, options: q.type === "choice" ? q.options : null, points: pts(i) };
+  const image = q.image ? (/^https?:\/\//.test(q.image) ? q.image : "/img/" + q.image) : null;
+  return { i, n: Q.length, cat: q.cat || "", q: q.q, type: q.type, options: q.type === "choice" ? q.options : null, multi: !!q.multi, rule: q.rule || "", points: maxPts(q), image };
 }
 function answerInfo(i) {
   const q = Q[i];
   const correct = q.type === "choice" ? (q.correct || []) : null;
-  return { answer: q.answerText || (q.accept || [])[0] || "", explain: q.explain || "", correct };
+  return { answer: q.answerText || (q.accept || [])[0] || "", explain: q.explain || "", correct, allowed: allowed(q) };
 }
 function teamView(r, tid) {
   const t = r.teams.get(tid); if (!t) return null;
@@ -84,10 +108,10 @@ function teamView(r, tid) {
   if (r.state === "question" || r.state === "reveal") {
     v.q = qPublic(r.qi);
     const a = r.answers.get(tid);
-    v.answered = !!a; v.myAnswer = a ? (a.text || "") : null; v.myIdx = a && a.idx != null ? a.idx : null;
+    v.answered = !!a; v.myAnswer = a ? (a.text || "") : null; v.myIdx = a && a.idx != null ? a.idx : null; v.myIdxs = a && a.idxs ? a.idxs : null;
   }
   if (r.state === "reveal") {
-    Object.assign(v, { reveal: Object.assign(answerInfo(r.qi), { ok: !!t.ok[r.qi], gained: t.ok[r.qi] ? pts(r.qi) : 0 }) });
+    Object.assign(v, { reveal: Object.assign(answerInfo(r.qi), { gained: t.pts[r.qi] || 0 }) });
     v.board = b.map(x => ({ name: x.name, score: x.score, rank: x.rank, tid: x.tid }));
   }
   if (r.state === "done") v.board = b.map(x => ({ name: x.name, score: x.score, rank: x.rank, tid: x.tid }));
@@ -101,8 +125,8 @@ function hostView(r) {
     v.reveal = answerInfo(r.qi);
     v.results = [...r.teams.values()].map(t => {
       const a = r.answers.get(t.tid);
-      return { tid: t.tid, name: t.name, text: a ? (a.text || "") : null, ok: !!t.ok[r.qi] };
-    }).sort((x, y) => (y.ok - x.ok) || x.name.localeCompare(y.name, "no"));
+      return { tid: t.tid, name: t.name, text: a ? (a.text || "") : null, points: t.pts[r.qi] || 0 };
+    }).sort((x, y) => (y.points - x.points) || x.name.localeCompare(y.name, "no"));
   }
   return v;
 }
@@ -133,23 +157,24 @@ function act(r, d) {
   switch (d.action) {
     case "start":
       if (r.state !== "lobby" || !r.teams.size || !Q.length) return false;
-      for (const t of r.teams.values()) t.ok = {};
+      for (const t of r.teams.values()) t.pts = {};
       r.qi = 0; r.answers.clear(); r.state = "question"; return true;
     case "reveal":
       if (r.state !== "question") return false;
-      for (const t of r.teams.values()) t.ok[r.qi] = judge(Q[r.qi], r.answers.get(t.tid));
+      for (const t of r.teams.values()) t.pts[r.qi] = judge(Q[r.qi], r.answers.get(t.tid));
       r.state = "reveal"; return true;
     case "toggle": {
       if (r.state !== "reveal") return false;
       const t = r.teams.get(d.tid); if (!t) return false;
-      t.ok[r.qi] = !t.ok[r.qi]; return true;
+      const al = allowed(Q[r.qi]), cur = t.pts[r.qi] || 0, i = al.indexOf(cur);
+      t.pts[r.qi] = al[(i + 1) % al.length]; return true;
     }
     case "next":
       if (r.state !== "reveal") return false;
       if (r.qi + 1 >= Q.length) { r.state = "done"; } else { r.qi++; r.answers.clear(); r.state = "question"; }
       return true;
     case "reset":
-      r.state = "lobby"; r.qi = -1; r.answers.clear(); for (const t of r.teams.values()) t.ok = {}; return true;
+      r.state = "lobby"; r.qi = -1; r.answers.clear(); for (const t of r.teams.values()) t.pts = {}; return true;
     case "kick":
       if (!r.teams.has(d.tid)) return false; r.teams.delete(d.tid); r.answers.delete(d.tid); return true;
   }
@@ -173,7 +198,7 @@ function handle(req, res, url, parts) {
       if (!r || (!r.teams.has(d.tid) && r.teams.size >= MAX_TEAMS)) { res.writeHead(503); return res.end(); }
       for (const t of r.teams.values()) if (t.tid !== d.tid && t.name.toLowerCase() === name.toLowerCase()) { res.writeHead(409); return res.end(); }
       const t = r.teams.get(d.tid);
-      if (t) t.name = name; else r.teams.set(d.tid, { tid: d.tid, name, ok: {} });
+      if (t) t.name = name; else r.teams.set(d.tid, { tid: d.tid, name, pts: {} });
       r.touched = Date.now(); ok204(res); pushAll(r);
     });
     return true;
@@ -194,7 +219,12 @@ function handle(req, res, url, parts) {
       if (!r || !validTid(d.tid) || !r.teams.has(d.tid)) { res.writeHead(404); return res.end(); }
       if (r.state !== "question") { res.writeHead(409); return res.end(); }
       const q = Q[r.qi];
-      if (q.type === "choice") {
+      if (q.type === "choice" && q.multi) {
+        const idxs = Array.isArray(d.idxs) ? [...new Set(d.idxs.map(Number))].sort((a, b) => a - b) : null;
+        if (!idxs || idxs.some(i => !Number.isInteger(i) || i < 0 || i >= q.options.length)) { res.writeHead(400); return res.end(); }
+        if (!idxs.length) r.answers.delete(d.tid);
+        else r.answers.set(d.tid, { idxs, text: idxs.map(i => q.options[i]).join(", "), ts: Date.now() });
+      } else if (q.type === "choice") {
         const idx = Number(d.idx);
         if (!Number.isInteger(idx) || idx < 0 || idx >= q.options.length) { res.writeHead(400); return res.end(); }
         r.answers.set(d.tid, { idx, text: q.options[idx], ts: Date.now() });

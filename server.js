@@ -112,6 +112,17 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
+  if (req.method === "GET" && parts[0] === "img" && parts.length === 2 && /^[A-Za-z0-9._-]+$/.test(parts[1])) {
+    const types = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif", svg: "image/svg+xml" };
+    const type = types[parts[1].split(".").pop().toLowerCase()];
+    if (!type) { res.writeHead(404); return res.end(); }
+    fs.readFile(path.join(__dirname, "public", "img", parts[1]), (err, buf) => {
+      if (err) { res.writeHead(404); return res.end(); }
+      res.writeHead(200, { "content-type": type, "cache-control": "public, max-age=300" });
+      res.end(buf);
+    });
+    return;
+  }
   if (quiz.handle(req, res, url, parts)) return;
   if (url.pathname === "/healthz") { res.writeHead(200); return res.end("ok"); }
   if (parts[0] !== "api" || !validCode(code)) { res.writeHead(404); return res.end("Fant ikke siden"); }
