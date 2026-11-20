@@ -2,9 +2,9 @@
   "_hjelp": "Rediger spørsmålene her. type: 'choice' (flervalg; 'correct' = liste med riktige alternativer talt fra 0) eller 'text' (fritekst; 'accept' = godkjente svar, valgfritt 'regex'). 'multi': true lar lagene velge flere alternativer, med poengregel i 'scoring' (perCorrect, perWrong, min). 'answerText' vises som fasit. 'image': filnavn i mappen public/img (f.eks. 'status1.png') eller en full https-adresse; vises som firkantet bilde under poengtavlen og på lagenes telefoner. 'points' er poeng for riktig svar (standard 1). 'todo': true hopper over spørsmålet.",
   "questions": [
     { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [1], "answerText": "Gustav", "image": "jb1.png" },
-    { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [1], "answerText": "Caroline", "image": "life-is-short.png" },
+    { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [0], "answerText": "Caroline", "image": "life-is-short.png" },
     { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [0], "answerText": "Caroline", "image": "jb2.png" },
-    { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [0], "answerText": "Gustav", "image": "poledancing.png" },
+    { "cat": "Om oss", "q": "Hvem skrev denne Facebook-statusen?", "type": "choice", "options": ["Caroline", "Gustav"], "correct": [1], "answerText": "Gustav", "image": "poledancing.png" },
 
     { "cat": "Om oss", "q": "2 sannheter og en løgn om Gustav. Hvilken er løgnen?", "type": "choice",
       "options": ["Har kommet hjem og funnet inngangsdøra si på vidt gap", "Har blitt fanget i en heis i over en time", "Har blitt jaget av en kalkun"],
